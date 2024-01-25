@@ -24,11 +24,24 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
 import { Input } from "@/components/ui/input"
-import { toast } from "@/components/ui/use-toast"
 import { addDoc, collection } from "firebase/firestore"
 import { useState } from "react"
-import { db } from "@/firebase"
+import { db, storage } from "@/firebase"
+
+import { useRouter } from 'next/navigation'
+import toast, { Toaster } from 'react-hot-toast';
+import { useAppStore } from "@/store/store"
+import DropzoneComponent from 'react-dropzone'
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage"
 
 const FormSchema = z.object({
   clientName: z.string({
@@ -47,11 +60,9 @@ const FormSchema = z.object({
     required_error: "This field can't be empty!!"
   }),
   servicesProvided: z.string({
-    required_error: "This field can't be empty!!"
+    required_error: "Select the service being offered"
   }),
-  indemnityClause: z.string({
-    required_error: "This field can't be empty!!"
-  }),
+  indemnityClause: z.instanceof(File),
   nextOfKinName: z.string({
     required_error: "This field can't be empty!!"
   }),
@@ -65,6 +76,17 @@ const FormSchema = z.object({
 
 export function ClientCard() {
   const [isLoading, setIsLoading] = useState(false)
+  const [indemnityFile, setIndemnityFile] = useState<File | null>(null)
+
+  const notify = () => toast('Client Added...');
+  const errorAdding = () => toast('Please Try Again...');
+
+  const router = useRouter();
+
+  const [clientID, setClientID] = useAppStore((state) => [
+    state.clientID,
+    state.setClientID
+  ])
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -75,7 +97,7 @@ export function ClientCard() {
       pin: "",
       address: "",
       servicesProvided: "",
-      indemnityClause: "",
+      indemnityClause: new File([], ""),
       nextOfKinName: "",
       nextOfKinNumber: "",
       nextOfKinAddress: "",
@@ -84,13 +106,29 @@ export function ClientCard() {
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     try {
-      const caseData = await addDoc(collection(db, "Clients"), data);
+      const storageRef = ref(storage, `indemnity/${data.clientId}-${indemnityFile?.name}`);
+
+      await uploadBytes(storageRef, indemnityFile!);
+
+      const downloadURL = await getDownloadURL(storageRef);
+
+      const clientData = { ...data, indemnityClause: downloadURL };
+
+      const docRef = await addDoc(collection(db, "Clients"), clientData);
+
+      console.log(docRef)
 
       setIsLoading(true);
 
-      console.log("Added Client")
+      const newClientId = data.clientId;
+
+      setClientID(newClientId)
+
+      notify();
+
+      router.push('/cases')
     } catch (error) {
-      console.error('Error Adding Case:', error)
+      errorAdding();
     }
   }
 
@@ -186,9 +224,25 @@ export function ClientCard() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Services Provided</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Services Provided" {...field} />
-                  </FormControl>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select the service offered" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="banking">Banking and Finance</SelectItem>
+                      <SelectItem value="coporate">Coporate M&A</SelectItem>
+                      <SelectItem value="disputeResolution">Dispute Resolution</SelectItem>
+                      <SelectItem value="trade">International Trade</SelectItem>
+                      <SelectItem value="intellectualProperty">Intellectual Property</SelectItem>
+                      <SelectItem value="privateClient">Private Client</SelectItem>
+                      <SelectItem value="project">Project & Infrastructure</SelectItem>
+                      <SelectItem value="realEstate">Real Estate</SelectItem>
+                      <SelectItem value="tax">Tax</SelectItem>
+                      <SelectItem value="Employement">Employment</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -202,7 +256,16 @@ export function ClientCard() {
                 <FormItem>
                   <FormLabel>Indemnity Clause</FormLabel>
                   <FormControl>
-                    <Input placeholder="Indemnity Clause" {...field} />
+                    <Input
+                      type="file"
+                      accept=".pdf"
+                      multiple={false}
+                      className="dark:bg-transparent cursor-pointer file:cursor-pointer file:text-primary dark:border-primary dark:ring-offset-primary"
+                      onChange={(e) => {
+                        field.onChange(e.target.files ? e.target.files[0] : null);
+                        setIndemnityFile(e.target.files ? e.target.files[0] : null);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -257,6 +320,8 @@ export function ClientCard() {
             <Button type="submit">Submit</Button>
           </form>
         </Form>
+
+        <Toaster />
       </CardContent>
     </Card>
   )

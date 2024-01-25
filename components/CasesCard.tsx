@@ -24,13 +24,24 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
 import { Input } from "@/components/ui/input"
-import { toast } from "@/components/ui/use-toast"
+import { Textarea } from "@/components/ui/textarea"
 import { addDoc, collection } from "firebase/firestore"
 import { useState } from "react"
 import { db } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
+import toast, { Toaster } from 'react-hot-toast';
+import { useAppStore } from "@/store/store"
+import { useUser } from "@clerk/nextjs"
 
 const FormSchema = z.object({
   caseNo: z.string({
@@ -43,7 +54,7 @@ const FormSchema = z.object({
     required_error: "This field can't be empty!!"
   }),
   department: z.string({
-    required_error: "This field can't be empty!!"
+    required_error: "Please select a department"
   }),
   location: z.string({
     required_error: "This field can't be empty!!"
@@ -71,18 +82,26 @@ export function CasesCard() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter();
 
+  const user = useUser();
+
+  const userName = user.user?.fullName ?? ''
+
+  const [clientID] = useAppStore((state) => [
+    state.clientID
+  ])
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       caseNo: "",
       caseName: "",
-      clientId: "",
-      department: "",
+      clientId: clientID,
+      department: "Select a Department",
       location: "",
       court: "",
       status: "",
       summary: "",
-      loggedBy: "",
+      loggedBy: userName,
       instructionDate: "",
     },
   })
@@ -149,7 +168,7 @@ export function CasesCard() {
                 <FormItem>
                   <FormLabel>Client ID</FormLabel>
                   <FormControl>
-                    <Input placeholder="Client ID" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -163,9 +182,21 @@ export function CasesCard() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Department</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Department" {...field} />
-                  </FormControl>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a Department" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="civil">Civil</SelectItem>
+                      <SelectItem value="commercial">Commercial</SelectItem>
+                      <SelectItem value="probate">Probate & Family</SelectItem>
+                      <SelectItem value="adr">Alternative Dispute Resolution</SelectItem>
+                      <SelectItem value="criminal">Criminal</SelectItem>
+                      <SelectItem value="employment">Employment & Labor</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -224,7 +255,7 @@ export function CasesCard() {
                 <FormItem>
                   <FormLabel>Summary</FormLabel>
                   <FormControl>
-                    <Input placeholder="Summary" {...field} />
+                    <Textarea placeholder="Summary" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -239,7 +270,7 @@ export function CasesCard() {
                 <FormItem>
                   <FormLabel>Logged By</FormLabel>
                   <FormControl>
-                    <Input placeholder="Logged By" {...field} />
+                    <Input {...field} disabled value={userName} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

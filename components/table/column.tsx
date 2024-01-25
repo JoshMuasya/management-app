@@ -32,20 +32,4 @@ export const columns: ColumnDef<ClientFormData>[] = [
         accessorKey: "servicesProvided",
         header: "Services Provided",
     },
-    {
-        accessorKey: "indemnityClause",
-        header: "Indemnity Clause",
-    },
-    {
-        accessorKey: "nokName",
-        header: "Next of Kin Name",
-    },
-    {
-        accessorKey: "nokPhonenumber",
-        header: "Next of Kin Phonenumber",
-    },
-    {
-        accessorKey: "nokAddress",
-        header: "Next of Kin Address",
-    }
 ];

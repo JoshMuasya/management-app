@@ -23,13 +23,14 @@ import { CasesType, ClientFormData } from "@/interface"
 import { useRouter } from "next/navigation"
 import { collection, documentId, getDocs } from "firebase/firestore"
 import { db } from "@/firebase"
+import Link from 'next/link'
 
 const ViewClient = ({
     params
 }: {
     params: { viewClient: string }
 }) => {
-    const id = '33365401'
+    const id = params.viewClient
 
     const [casesArray, setCasesArray] = useState<CasesType[]>([])
     const [clientsArray, setClientsArray] = useState<ClientFormData[]>([])
@@ -80,77 +81,86 @@ const ViewClient = ({
     };
 
     return (
-        <div className='pt-28 pb-10 px-5'>
-            <div className='flex flex-row justify-start'>
-                <div className='pr-10 flex-shrink-0 h-screen'>
-                    <div className='flex flex-col justify-center align-middle items-center pt-16'>
-                        {clientsArray.map((client, index) => (
-                            <div key={index}>
-                                {/* Name */}
-                                <div>
-                                    <strong>Name:</strong> {client.clientName}
-                                </div>
-
-                                {/* ID */}
-                                <div>
-                                    <strong>ID:</strong> {client.clientId}
-                                </div>
-
-                                {/* Pin */}
-                                <div>
-                                    <strong>Pin:</strong> {client.pin}
-                                </div>
-
-                                {/* Email */}
-                                <div>
-                                    <strong>Email:</strong> {client.email}
-                                </div>
-
-                                {/* Number */}
-                                <div>
-                                    <strong>Phone Number:</strong> {client.phoneNumber}
-                                </div>
-
-                                {/* Address */}
-                                <div>
-                                    <strong>Address:</strong> {client.address}
-                                </div>
-
-                                {/* Services Provided */}
-                                <div>
-                                    <strong>Services Provided:</strong> {client.servicesProvided}
-                                </div>
-
-                                {/* Indemnity Clause */}
-                                <div>
-                                    <strong>Indemnity Clause:</strong> {client.indemnityClause}
-                                </div>
-
-                                {/* Next of Kin Name */}
-                                <div>
-                                    <strong>Next of Kin Name:</strong> {client.nextOfKinName}
-                                </div>
-
-                                {/* Next of Kin number */}
-                                <div>
-                                    <strong>Next of Kin Number:</strong> {client.nextOfKinNumber}
-                                </div>
-
-                                {/* Next of Kin Address */}
-                                <div>
-                                    <strong>Next of Kin Address:</strong> {client.nextOfKinAddress}
-                                </div>
+        <div className='pt-28 pb-10 px-5 w-screen'>
+            <div className='flex flex-col lg:flex-row lg:justify-between justify-center align-middle items-center'>
+                {/* Left */}
+                <div className='flex flex-col pb-10 lg:pb-0'>
+                    {clientsArray.map((client, index) => (
+                        <div key={index} className='w-fit'>
+                            {/* Name */}
+                            <div>
+                                <strong>Name:</strong> {client.clientName}
                             </div>
-                        ))}
-                    </div>
+
+                            {/* ID */}
+                            <div>
+                                <strong>ID:</strong> {client.clientId}
+                            </div>
+
+                            {/* Pin */}
+                            <div>
+                                <strong>Pin:</strong> {client.pin}
+                            </div>
+
+                            {/* Email */}
+                            <div>
+                                <strong>Email:</strong> {client.email}
+                            </div>
+
+                            {/* Number */}
+                            <div>
+                                <strong>Phone Number:</strong> {client.phoneNumber}
+                            </div>
+
+                            {/* Address */}
+                            <div>
+                                <strong>Address:</strong> {client.address}
+                            </div>
+
+                            {/* Services Provided */}
+                            <div>
+                                <strong>Services Provided:</strong> {client.servicesProvided}
+                            </div>
+
+                            {/* Indemnity Clause */}
+                            <div className='w-fit'>
+                                <Link
+                                    href={client.indemnityClause}
+                                >
+                                    Indemnity Clause
+                                </Link>
+                            </div>
+
+                            {/* Next of Kin Name */}
+                            <div>
+                                <strong>Next of Kin Name:</strong> {client.nextOfKinName}
+                            </div>
+
+                            {/* Next of Kin number */}
+                            <div>
+                                <strong>Next of Kin Number:</strong> {client.nextOfKinNumber}
+                            </div>
+
+                            {/* Next of Kin Address */}
+                            <div>
+                                <strong>Next of Kin Address:</strong> {client.nextOfKinAddress}
+                            </div>
+                        </div>
+                    ))}
+
                 </div>
 
-                <div className='flex-grow'>
+                {/* Right */}
+                <div className='w-1/2'>
                     <Card className="w-full bg-accent">
-                        <CardHeader>
-                            <CardTitle>Client Name</CardTitle>
-                            <CardDescription>Cases related to Client Name</CardDescription>
-                        </CardHeader>
+                        {clientsArray.map((client, index) => (
+                            <CardHeader
+                                key={index}
+                            >
+                                <CardTitle>{client.clientName}</CardTitle>
+                                <CardDescription>Cases related to {client.clientName}</CardDescription>
+                            </CardHeader>
+                        ))}
                         <CardContent>
                             {casesArray.length > 0 ? (
                                 <Accordion type="single" collapsible>
@@ -211,7 +221,7 @@ const ViewClient = ({
                                                     {/* Bottom */}
                                                     <div>
                                                         <Button
-                                                        onClick={() => handleButtonClick(item.documentId)}
+                                                            onClick={() => handleButtonClick(item.documentId)}
                                                         >View More</Button>
                                                     </div>
                                                 </div>
