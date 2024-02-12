@@ -22,7 +22,7 @@ import { useState, useEffect } from "react"
 import { CasesType, ClientFormData } from "@/interface"
 import { useRouter } from "next/navigation"
 import { collection, documentId, getDocs } from "firebase/firestore"
-import { db } from "@/firebase"
+import { db } from "@/lib/firebase"
 import Link from 'next/link'
 
 const ViewClient = ({

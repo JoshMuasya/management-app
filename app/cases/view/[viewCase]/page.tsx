@@ -42,7 +42,7 @@ import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import { addDoc, collection, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore'
-import { db } from '@/firebase'
+import { db } from '@/lib/firebase'
 
 import toast, { Toaster } from 'react-hot-toast';
 import { CasesType } from '@/interface'

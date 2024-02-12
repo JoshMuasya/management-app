@@ -36,7 +36,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { addDoc, collection } from "firebase/firestore"
 import { useState } from "react"
-import { db } from "@/firebase"
+import { db } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import toast, { Toaster } from 'react-hot-toast';

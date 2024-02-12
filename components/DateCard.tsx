@@ -24,7 +24,7 @@ import {
 
 import { Input } from "@/components/ui/input"
 import { addDoc, collection } from "firebase/firestore"
-import { db } from "@/firebase"
+import { db } from "@/lib/firebase"
 
 import { Loader2 } from "lucide-react"
 import { DatesType } from "@/interface"

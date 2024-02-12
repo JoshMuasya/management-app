@@ -2,8 +2,6 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 
-import { ClerkProvider } from '@clerk/nextjs'
-
 import { ThemeProvider } from "@/components/ThemeProvider"
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -21,8 +19,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider>
-      <html lang="en">
+    <html lang="en">
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
@@ -30,12 +27,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Header />
-          {children}
-          <Footer />
+            <Header />
+            {children}
+            <Footer />
         </ThemeProvider>
       </body>
     </html>
-    </ClerkProvider>
   )
 }

@@ -25,7 +25,7 @@ export default function Home() {
 
           {/* Button */}
           <Link
-              href='/home'
+              href='/auth/login'
               className={`${buttonVariants({ variant: "default" })} px-5 text-xl font-bold`}
             >
               LOGIN

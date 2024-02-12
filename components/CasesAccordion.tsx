@@ -17,34 +17,82 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion"
 
-import { collection, getDocs } from 'firebase/firestore'
-import { db } from '@/firebase'
-import { CasesType } from '@/interface'
+import { collection, getDocs, query, where } from 'firebase/firestore'
+import { auth, db } from '@/lib/firebase'
+import { CasesType, UserData } from '@/interface'
 
 import { useRouter } from 'next/navigation'
+import { onAuthStateChanged } from 'firebase/auth'
 
 const CasesAccordion = () => {
     const [casesArray, setCasesArray] = useState<CasesType[]>([])
     const router = useRouter();
+    const [userData, setUserData] = useState<UserData>({})
+    const [isLogin, setIsLogin] = useState(false)
+
+    const fetchUserData = async (uid: string) => {
+        const usersCollection = collection(db, "Users");
+
+        const q = query(usersCollection, where('uid', '==', uid))
+
+        try {
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const userData = querySnapshot.docs[0].data();
+                setUserData(userData.data);
+            } else {
+                console.log("User not found in the database")
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error)
+        }
+    }
+
+    useEffect(() => {
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const uid = user.uid;
+                setIsLogin(true)
+                fetchUserData(uid)
+            } else {
+                setIsLogin(false)
+            }
+        })
+    }, [isLogin])
 
     useEffect(() => {
         const fetchData = async () => {
             const collectionRef = collection(db, "Cases");
+            let queryRef;
 
-            const querySnapshot = await getDocs(collectionRef);
+            if (userData.rank?.toLowerCase() === "partner") {
+                queryRef = query(collectionRef);
+            } else if (userData.department) {
+                queryRef = query(collectionRef, where('department', '==', userData.department));
+            }
 
-            const data: CasesType[] = []
+            try {
+                if (queryRef) {
+                    const querySnapshot = await getDocs(queryRef);
+                    const data: CasesType[] = [];
 
-            querySnapshot.forEach((doc) => {
-                const dataFromDoc = doc.data() as CasesType;
-                data.push({ ...dataFromDoc, documentId: doc.id });
-            });
+                    querySnapshot.forEach((doc) => {
+                        const dataFromDoc = doc.data() as CasesType;
+                        data.push({ ...dataFromDoc, documentId: doc.id });
+                    });
 
-            setCasesArray(data);
+                    setCasesArray(data);
+                }
+            } catch (error) {
+                console.error('Error fetching cases data:', error);
+            }
         };
 
-        fetchData();
-    }, [])
+        if (isLogin && userData.department) {
+            fetchData();
+        }
+    }, [isLogin, userData])
 
     const handleClick = (caseId: string) => {
         router.push(`/cases/view/${caseId}`)
@@ -145,7 +193,7 @@ const CasesAccordion = () => {
 
                                                         <div>
                                                             <ul>
-                                                                {(dateValues as unknown as { seconds: number}[])
+                                                                {(dateValues as unknown as { seconds: number }[])
                                                                     .sort((a, b) => a.seconds - b.seconds) // Sort dates in descending order
                                                                     .map((dateValue, valueIndex) => (
                                                                         <li key={valueIndex}>{new Date(dateValue.seconds * 1000).toLocaleDateString()}</li>

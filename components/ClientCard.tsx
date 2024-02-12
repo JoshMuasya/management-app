@@ -35,7 +35,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { addDoc, collection } from "firebase/firestore"
 import { useState } from "react"
-import { db, storage } from "@/firebase"
+import { db, storage } from "@/lib/firebase"
 
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast';

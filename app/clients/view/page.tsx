@@ -2,7 +2,7 @@
 
 import { DataTable } from '@/components/table/Table'
 import { columns } from '@/components/table/column'
-import { db } from '@/firebase'
+import { db } from '@/lib/firebase'
 import { ClientFormData } from '@/interface'
 import { collection, getDocs } from 'firebase/firestore'
 import React, { useEffect, useState } from 'react'
@@ -12,22 +12,22 @@ const ViewClients = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-        const collectionRef = collection(db, "Clients");
+      const collectionRef = collection(db, "Clients");
 
-        const querySnapshot = await getDocs(collectionRef);
+      const querySnapshot = await getDocs(collectionRef);
 
-        const newData: ClientFormData[] = []
+      const newData: ClientFormData[] = []
 
-        querySnapshot.forEach((doc) => {
-            const dataFromDoc = doc.data() as ClientFormData;
-            newData.push({ ...dataFromDoc });
-        });
+      querySnapshot.forEach((doc) => {
+        const dataFromDoc = doc.data() as ClientFormData;
+        newData.push({ ...dataFromDoc });
+      });
 
-        setData(newData);
+      setData(newData);
     };
 
     fetchData();
-}, [])
+  }, [])
 
   console.log(data)
 

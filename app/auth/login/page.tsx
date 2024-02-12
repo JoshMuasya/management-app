@@ -1,14 +1,14 @@
-import { SignUp } from '@/components/SignUp'
+import { LoginForm } from '@/components/Login'
 import React from 'react'
 
-const AddLawyer = () => {
+const Login = () => {
   return (
     <div className='pt-28 pb-14 px-10'>
       <div className='flex flex-col justify-center items-center align-middle'>
-      <SignUp />
+        <LoginForm />
       </div>
     </div>
   )
 }
 
-export default AddLawyer
+export default Login
