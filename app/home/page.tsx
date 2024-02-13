@@ -57,7 +57,7 @@ const Home = () => {
     }
 
     return (
-        <div className='w-full h-full m:h-screen flex flex-col justify-center align-middle items-center back-pic-dark bg-fixed bg-cover pt-16 pb-14'>
+        <div className='w-full h-screen m:h-screen flex flex-col justify-center align-middle items-center back-pic-dark bg-fixed bg-cover pt-16 pb-14'>
             {/* Main */}
             <div className='z-10 flex flex-col items-center align-middle justify-center w-4/5 my-24 m:my-5'>
                 {/* Top */}
