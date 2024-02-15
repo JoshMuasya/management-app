@@ -1,4 +1,6 @@
-import React from 'react'
+'use client'
+
+import React, { useEffect, useState } from 'react'
 import { DatePickerWithRange } from './DatePicker'
 import Link from 'next/link'
 
@@ -25,11 +27,117 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { Calendar } from "@/components/ui/calendar"
+
+import { addDays, format, subMonths } from "date-fns"
+import { Calendar as CalendarIcon } from "lucide-react"
+import { DateRange } from "react-day-picker"
+import { Expenses, FinanceClientData } from '@/interface'
+import { collection, getDocs } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+
 const ReviewFinances = () => {
+  const [financesArray, setFianancesArray] = useState<FinanceClientData[]>([])
+  const [expensesArray, setExpensesArray] = useState<Expenses[]>([])
+
+  useEffect(() => {
+    const fetchFianacialData = async () => {
+      const financeCollection = collection(db, "Finances");
+
+      const querySnapshot = await getDocs(financeCollection)
+
+      const data: FinanceClientData[] = []
+
+      querySnapshot.forEach((doc) => {
+        const dataFromDoc = doc.data() as FinanceClientData;
+        data.push({ ...dataFromDoc })
+      })
+
+      setFianancesArray(data)
+    }
+
+    const fetchExpensesData = async () => {
+      const expenseCollection = collection(db, "Expenses");
+
+      const querySnapshot = await getDocs(expenseCollection)
+
+      const expensedata: Expenses[] = []
+
+      querySnapshot.forEach((doc) => {
+        const dataFromDoc = doc.data() as Expenses;
+        expensedata.push({ ...dataFromDoc })
+      })
+
+      setExpensesArray(expensedata)
+    }
+
+    fetchFianacialData()
+    fetchExpensesData()
+  }, [])
+
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: new Date(2024, 0, 24),
+    to: addDays(new Date(2024, 1, 24), 0),
+  })
+
+  const handleSelect = (selectedDate: DateRange | undefined) => {
+    setDate(selectedDate)
+
+    if (selectedDate) {
+      console.log("Selected Dates:", selectedDate.from, selectedDate.to)
+    }
+  }
+
+  // Handle 3 Months
+  const handleLast3Months = () => {
+    const today = new Date();
+    const fromDate = subMonths(today, 3);
+    const toDate = today;
+    setDate({ from: fromDate, to: toDate });
+  };
+
+  // Handle 6 Months
+  const handleLast6Months = () => {
+    const today = new Date();
+    const fromDate = subMonths(today, 6);
+    const toDate = today;
+    setDate({ from: fromDate, to: toDate });
+  };
+
+  // Handle 12 Months
+  const handleLast1Year = () => {
+    const today = new Date();
+    const fromDate = subMonths(today, 12);
+    const toDate = today;
+    setDate({ from: fromDate, to: toDate });
+  };
+
+  // Handle 60 Months
+  const handleLast5Years = () => {
+    const today = new Date();
+    const fromDate = subMonths(today, 60);
+    const toDate = today;
+    setDate({ from: fromDate, to: toDate });
+  };
+
+  // Handle 120 Months
+  const handleLast10Years = () => {
+    const today = new Date();
+    const fromDate = subMonths(today, 120);
+    const toDate = today;
+    setDate({ from: fromDate, to: toDate });
+  };
+
   return (
     <div className='w-full flex flex-col justify-center align-middle items-center'>
       {/* Title */}
-      <div>
+      <div className='text-2xl font-bold pb-3'>
         View Financial Records
       </div>
       <ResizablePanelGroup
@@ -38,30 +146,82 @@ const ReviewFinances = () => {
       >
         <ResizablePanel defaultSize={40}>
           <div className="flex h-screen items-center justify-center p-6 flex-col align-middle">
-            <div>
+            <div className='font-bold text-xl text-center pb-10'>
               Select Time Period For Finances Review
             </div>
 
-            <div>
+            <div className='pb-5'>
               <div className='flex flex-col justify-center align-middle items-center'>
-                <DatePickerWithRange />
+                <div className={cn("grid gap-2")}>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="date"
+                        variant={"outline"}
+                        className={cn(
+                          "w-[300px] justify-start text-left font-normal",
+                          !date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date?.from ? (
+                          date.to ? (
+                            <>
+                              {format(date.from, "LLL dd, y")} -{" "}
+                              {format(date.to, "LLL dd, y")}
+                            </>
+                          ) : (
+                            format(date.from, "LLL dd, y")
+                          )
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={date?.from}
+                        selected={date}
+                        onSelect={handleSelect}
+                        numberOfMonths={2}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             </div>
 
             {/* Presets */}
-            <div>
-              <h2>Last 3 Months</h2>
-              <h2>Last 6 Months</h2>
-              <h2>Last 1 Year</h2>
-              <h2>Last 5 Years</h2>
-              <h2>Last 10 Years</h2>
+            <div className='flex flex-col justify-center align-middle items-center'>
+              <Button
+                className='my-3'
+                onClick={handleLast3Months}
+              >Last 3 Months</Button>
+              <Button
+                className='my-3'
+                onClick={handleLast6Months}
+              >Last 6 Months</Button>
+              <Button
+                className='my-3'
+                onClick={handleLast1Year}
+              >Last 1 Year</Button>
+              <Button
+                className='my-3'
+                onClick={handleLast5Years}
+              >Last 5 Years</Button>
+              <Button
+                className='my-3'
+                onClick={handleLast10Years}
+              >Last 10 Years</Button>
             </div>
           </div>
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel defaultSize={60}>
           <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={25}>
+            <ResizablePanel defaultSize={50}>
               <div className="flex h-fit items-center justify-center p-6 flex-col align-middle">
                 <h1>
                   Financial Records for the period Jan 24 2024 to Feb 24 2024
@@ -132,7 +292,7 @@ const ReviewFinances = () => {
               </div>
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize={75}>
+            <ResizablePanel defaultSize={50}>
               <div className="flex h-full items-center justify-center p-6 flex-col align-middle">
                 <h1>
                   Revenue, Expenses, Profit & Loss

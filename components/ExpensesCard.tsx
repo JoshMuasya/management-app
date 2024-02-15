@@ -39,6 +39,12 @@ import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { onAuthStateChanged } from "firebase/auth"
+import { auth, db } from "@/lib/firebase"
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore"
+import { UserData } from "@/interface"
+import toast, { Toaster } from 'react-hot-toast';
 
 const FormSchema = z.object({
     name: z.string().min(2, {
@@ -49,28 +55,80 @@ const FormSchema = z.object({
     }),
     date: z.date({
         required_error: "A date is required.",
-      }),
-      amount: z.string({
+    }),
+    amount: z.string({
         required_error: "Amount cannot be empty"
-      }),
+    }),
     loggedBy: z.string({
         required_error: "Logged by cannot be empty"
     }),
 })
 
+const addError = () => toast('Please try Again...');
+
 export function ExpensesCard() {
+    const [userData, setUserData] = useState<UserData | null>(null)
+    const [fullname, setFullname] = useState("");
+    const [isLoading, setIsLoading] = useState(false)
+
+    useEffect(() => {
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const uid = user.uid;
+                fetchUserData(uid)
+            }
+        })
+    }, [])
+
+    useEffect(() => {
+        if (userData && userData.fullname) {
+            setFullname(userData.fullname);
+            console.log("Fullname set:", userData.fullname); // Log fullname
+        }
+    }, [userData]);
+
+    const fetchUserData = async (uid: string) => {
+        const usersCollection = collection(db, "Users");
+
+        const q = query(usersCollection, where('uid', '==', uid))
+
+        try {
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const userData = querySnapshot.docs[0].data().data;
+                setUserData(userData as UserData);
+            } else {
+                console.log("No user data found for uid:", uid);
+            }
+        } catch (error) {
+            console.error("Error fetching user data", error)
+        }
+    }
+
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
         defaultValues: {
             name: "",
             description: "",
             amount: "",
-            loggedBy: "",
+            loggedBy: fullname,
         },
     })
 
-    function onSubmit(data: z.infer<typeof FormSchema>) {
+    async function onSubmit(data: z.infer<typeof FormSchema>) {
+        if (fullname) {
+            data.loggedBy = fullname;
+        }
+        try {
+            const expensesData = await addDoc(collection(db, "Expenses"), data);
+            
+            setIsLoading(true);
 
+            console.log(expensesData)
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     return (
@@ -104,11 +162,11 @@ export function ExpensesCard() {
                                 <FormItem>
                                     <FormLabel>Description</FormLabel>
                                     <FormControl>
-                                    <Textarea
-                  placeholder="Describe the Expense"
-                  className="resize-none"
-                  {...field}
-                />
+                                        <Textarea
+                                            placeholder="Describe the Expense"
+                                            className="resize-none"
+                                            {...field}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -168,21 +226,6 @@ export function ExpensesCard() {
                                             />
                                         </PopoverContent>
                                     </Popover>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* LoggedBy */}
-                        <FormField
-                            control={form.control}
-                            name="loggedBy"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Logged By</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Logged By" {...field} />
-                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}

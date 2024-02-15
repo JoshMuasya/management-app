@@ -81,3 +81,12 @@ export interface FinancesClient extends ClientFormData {
     totalAmount?: string;
     financeId: string;
 }
+
+export interface Expenses {
+    amount: string;
+    date: string;
+    description: string;
+    loggedBy: string;
+    name: string;
+    docId: string;
+}
