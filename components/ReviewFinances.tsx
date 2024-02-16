@@ -81,6 +81,8 @@ const ReviewFinances = () => {
     fetchExpensesData()
   }, [])
 
+  console.log(financesArray)
+
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: new Date(2024, 0, 24),
     to: addDays(new Date(2024, 1, 24), 0),
@@ -223,68 +225,59 @@ const ReviewFinances = () => {
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel defaultSize={50}>
               <div className="flex h-fit items-center justify-center p-6 flex-col align-middle">
-                <h1>
-                  Financial Records for the period Jan 24 2024 to Feb 24 2024
+                <h1 className='font-bold text-lg pb-3'>
+                  Financial Records for the period {date?.from && format(date.from, "MMM dd yyyy")} to {date?.to && format(date.to, "MMM dd yyyy")}
                 </h1>
 
                 {/* Clients */}
                 <div className='flex flex-col justify-center items-center align-middle'>
-                  <h2>
+                  <h2 className='font-bold text-base pb-3'>
                     Clients with pending Bills
                   </h2>
 
-                  <ScrollArea className="h-56 w-full rounded-md border">
+                  <ScrollArea className="h-64 w-full rounded-md border">
                     <div className='flex flex-row justify-center align-middle items-center flex-wrap'>
-                      <Card className="w-[250px]">
-                        <CardHeader>
-                          <CardTitle>Create project</CardTitle>
-                          <CardDescription>Deploy your new project in one-click.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
+                      {financesArray.map((finance, index) => {
+                        // Check if finance.totalAmount is defined and it's a valid number
+                        if (finance.totalAmount && !isNaN(parseFloat(finance.totalAmount))) {
+                          // Convert finance.totalAmount to a number
+                          const totalAmount = parseFloat(finance.totalAmount);
 
-                        </CardContent>
-                        <CardFooter className="flex justify-between">
-                          <Link
-                            href=''
-                            className={buttonVariants({ variant: "default" })}>
-                            Click here
-                          </Link>
-                        </CardFooter>
-                      </Card>
+                          // Calculate total payment from payment history
+                          const totalPayment = Object.values(finance.paymentHistory ?? {}).reduce((acc, amount) => acc + parseFloat(amount), 0);
 
-                      <Card className="w-[250px]">
-                        <CardHeader>
-                          <CardTitle>Create project</CardTitle>
-                          <CardDescription>Deploy your new project in one-click.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
+                          // Calculate balance
+                          const balance = totalAmount - totalPayment;
 
-                        </CardContent>
-                        <CardFooter className="flex justify-between">
-                          <Link
-                            href=''
-                            className={buttonVariants({ variant: "default" })}>
-                            Click here
-                          </Link>
-                        </CardFooter>
-                      </Card>
+                          return (
+                            <Card key={index} className="w-[250px] m-5">
+                              <CardHeader>
+                                <CardTitle>{finance.clientName}</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <h3 className='pb-3'>
+                                  <span className='font-bold text-lg'>Total Amount:</span> {totalAmount}
+                                </h3>
 
-                      <Card className="w-[250px]">
-                        <CardHeader>
-                          <CardTitle>Create project</CardTitle>
-                          <CardDescription>Deploy your new project in one-click.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
+                                <h2 className="font-bold text-base pb-1">Payment History</h2>
+                                <ul>
+                                  {Object.entries(finance.paymentHistory ?? {}).map(([date, amount]) => (
+                                    <li key={date}>
+                                      <strong>{date}:</strong> {amount}
+                                    </li>
+                                  ))}
+                                </ul>
 
-                        </CardContent>
-                        <CardFooter className="flex justify-between">
-                          <Link
-                            href=''
-                            className={buttonVariants({ variant: "default" })}>
-                            Click here
-                          </Link>
-                        </CardFooter>
-                      </Card>
+                                <h3 className='pt-3'>
+                                  <span className='font-bold text-lg'>Balance:</span> {balance}
+                                </h3>
+                              </CardContent>
+                            </Card>
+                          );
+                        } else {
+                          return null;
+                        }
+                      })}
                     </div>
                   </ScrollArea>
 
@@ -294,19 +287,19 @@ const ReviewFinances = () => {
             <ResizableHandle />
             <ResizablePanel defaultSize={50}>
               <div className="flex h-full items-center justify-center p-6 flex-col align-middle">
-                <h1>
+                <h1 className='font-bold text-lg pb-3'>
                   Revenue, Expenses, Profit & Loss
                 </h1>
 
                 <div>
-                  <Tabs defaultValue="account" className="w-[400px]">
+                  <Tabs defaultValue="account" className="w-fit">
                     <TabsList>
                       <TabsTrigger value="revenue">Revenue</TabsTrigger>
                       <TabsTrigger value="expenses">Expenses</TabsTrigger>
                       <TabsTrigger value="profit">Profit & Loss</TabsTrigger>
                     </TabsList>
                     <TabsContent value="revenue">
-                      <h1>
+                      <h1 className='font-bold text-base pb-3'>
                         Total Revenue
                       </h1>
 
@@ -322,7 +315,7 @@ const ReviewFinances = () => {
                       </div>
                     </TabsContent>
                     <TabsContent value="expenses">
-                      <h1>
+                      <h1 className='font-bold text-base pb-3'>
                         Total Expenses
                       </h1>
 
@@ -338,7 +331,7 @@ const ReviewFinances = () => {
                       </div>
                     </TabsContent>
                     <TabsContent value="profit">
-                      <h1>
+                      <h1 className='font-bold text-base pb-3'>
                         Total Profit
                       </h1>
 
