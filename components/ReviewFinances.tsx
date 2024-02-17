@@ -45,6 +45,11 @@ import { db } from '@/lib/firebase'
 const ReviewFinances = () => {
   const [financesArray, setFianancesArray] = useState<FinanceClientData[]>([])
   const [expensesArray, setExpensesArray] = useState<Expenses[]>([])
+  const [filteredFinances, setFilteredFinances] = useState<FinanceClientData[]>([]);
+  const [filteredExpenses, setFilteredExpenses] = useState<Expenses[]>([]);
+  const [totalRevenue, setTotalRevenue] = useState<number>(0);
+  const [totalExpenses, setTotalExpenses] = useState<number>(0);
+  const [profitOrLoss, setProfitOrLoss] = useState<number>(0);
 
   useEffect(() => {
     const fetchFianacialData = async () => {
@@ -87,6 +92,66 @@ const ReviewFinances = () => {
     from: new Date(2024, 0, 24),
     to: addDays(new Date(2024, 1, 24), 0),
   })
+
+  useEffect(() => {
+    if (financesArray.length > 0 && date && date.from !== undefined && date.to !== undefined) {
+      const filteredData = financesArray.filter((finance) => {
+        let financeDate;
+        if (finance.dateCreated instanceof Date) {
+          financeDate = finance.dateCreated;
+        } else {
+          financeDate = (finance.dateCreated as any).toDate();
+        }
+        return financeDate >= date.from! && financeDate <= date.to!;
+      });
+      setFilteredFinances(filteredData);
+    }
+  }, [date, financesArray]);
+
+  useEffect(() => {
+    if (expensesArray.length > 0 && date && date.from !== undefined && date.to !== undefined) {
+      const filteredData = expensesArray.filter((expense) => {
+        let expenseDate;
+        if (expense.date instanceof Date) {
+          expenseDate = expense.date;
+        } else {
+          expenseDate = (expense.date as any).toDate();
+        }
+        return expenseDate >= date.from! && expenseDate <= date.to!;
+      });
+      setFilteredExpenses(filteredData);
+    }
+  }, [date, expensesArray]);
+
+  console.log("Filtered Expenses:", filteredExpenses)
+
+  useEffect(() => {
+    let total = 0;
+    filteredFinances.forEach(finance => {
+      if (finance.totalAmount && !isNaN(parseFloat(finance.totalAmount))) {
+        total += parseFloat(finance.totalAmount);
+      }
+    });
+    setTotalRevenue(total);
+  }, [filteredFinances]);
+
+  useEffect(() => {
+    let totalExpenses = 0;
+    filteredExpenses.forEach(expense => {
+      if (!isNaN(parseFloat(expense.amount))) {
+        totalExpenses += parseFloat(expense.amount);
+      }
+    });
+    setTotalExpenses(totalExpenses);
+  }, [filteredExpenses]);
+
+  useEffect(() => {
+    const profit = totalRevenue - totalExpenses;
+    setProfitOrLoss(profit);
+  }, [totalRevenue, totalExpenses]);
+
+  const profitBackgroundColor = 'bg-primary';
+  const lossBackgroundColor = 'bg-destructive';
 
   const handleSelect = (selectedDate: DateRange | undefined) => {
     setDate(selectedDate)
@@ -298,7 +363,7 @@ const ReviewFinances = () => {
                       <TabsTrigger value="expenses">Expenses</TabsTrigger>
                       <TabsTrigger value="profit">Profit & Loss</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="revenue">
+                    <TabsContent value="revenue" className='bg-primary'>
                       <h1 className='font-bold text-base pb-3'>
                         Total Revenue
                       </h1>
@@ -306,15 +371,17 @@ const ReviewFinances = () => {
                       <div>
                         <Card className="w-[350px]">
                           <CardHeader>
-                            <CardDescription>Total revenue as from 24 Jan 2024 to 24 Feb 2024</CardDescription>
+                            <CardDescription>Total revenue as from {date?.from && format(date.from, "MMM dd yyyy")} to {date?.to && format(date.to, "MMM dd yyyy")}</CardDescription>
                           </CardHeader>
                           <CardContent>
-                            Total Revenue: 20000000
+                            <h1 className="font-bold text-base pb-3">
+                              Total Revenue: {totalRevenue}
+                            </h1>
                           </CardContent>
                         </Card>
                       </div>
                     </TabsContent>
-                    <TabsContent value="expenses">
+                    <TabsContent value="expenses" className='bg-primary'>
                       <h1 className='font-bold text-base pb-3'>
                         Total Expenses
                       </h1>
@@ -322,15 +389,15 @@ const ReviewFinances = () => {
                       <div>
                         <Card className="w-[350px]">
                           <CardHeader>
-                            <CardDescription>Total expenses as from 24 Jan 2024 to 24 Feb 2024</CardDescription>
+                            <CardDescription>Total expenses as from {date?.from && format(date.from, "MMM dd yyyy")} to {date?.to && format(date.to, "MMM dd yyyy")}</CardDescription>
                           </CardHeader>
                           <CardContent>
-                            Total Expenses: 500000
+                            Total Expenses: {totalExpenses}
                           </CardContent>
                         </Card>
                       </div>
                     </TabsContent>
-                    <TabsContent value="profit">
+                    <TabsContent value="profit" className={profitOrLoss >= 0 ? profitBackgroundColor : lossBackgroundColor}>
                       <h1 className='font-bold text-base pb-3'>
                         Total Profit
                       </h1>
@@ -338,10 +405,10 @@ const ReviewFinances = () => {
                       <div>
                         <Card className="w-[350px]">
                           <CardHeader>
-                            <CardDescription>Total profit as from 24 Jan 2024 to 24 Feb 2024</CardDescription>
+                            <CardDescription>Total Profit/Loss as from {date?.from && format(date.from, "MMM dd yyyy")} to {date?.to && format(date.to, "MMM dd yyyy")}</CardDescription>
                           </CardHeader>
                           <CardContent>
-                            Total Revenue: 1500000
+                          Total {profitOrLoss >= 0 ? 'Profit' : 'Loss'}: 1500000
                           </CardContent>
                         </Card>
                       </div>
