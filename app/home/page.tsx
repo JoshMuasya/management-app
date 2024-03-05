@@ -22,9 +22,9 @@ const Home = () => {
             const querySnapshot = await getDocs(q);
 
             if (!querySnapshot.empty) {
-                const userData = querySnapshot.docs[0].data();
+                const dataUser = querySnapshot.docs[0].data();
 
-                setUserData(userData.data);
+                setUserData(dataUser);
             } else {
                 console.log("User not found")
             }
@@ -33,11 +33,10 @@ const Home = () => {
         }
     }
 
-    console.log(userData)
+    console.log("User:", userData)
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-            console.log(user)
             setLoading(false);
             if (!user) {
                 router.replace('/auth/login');
@@ -57,13 +56,13 @@ const Home = () => {
     }
 
     return (
-        <div className='w-full h-screen m:h-screen flex flex-col justify-center align-middle items-center back-pic-dark bg-fixed bg-cover pt-16 pb-14'>
+        <div className='w-full h-full m:h-screen flex flex-col justify-center align-middle items-center back-pic-dark bg-fixed bg-cover pt-16 pb-14'>
             {/* Main */}
             <div className='z-10 flex flex-col items-center align-middle justify-center w-4/5 my-24 m:my-5'>
                 {/* Top */}
                 <div className='flex flex-col lg:flex-row items-center align-middle justify-center w-full lg:mb-10 '>
                     {/* Left */}
-                    {userData.rank?.toLowerCase() === 'partner' && (
+                    {userData?.rank?.toLowerCase() === 'partner' && (
                         <div className="pb-10 pr-0 lg:pr-10 lg:pb-0">
                             <CardHome
                                 title="USERS"
@@ -79,10 +78,10 @@ const Home = () => {
                     {/* Right */}
                     <div className="pb-10 lg:pb-0">
                         <CardHome
-                            title="CASES"
-                            desc="Add or View Cases"
-                            button1="Add Case"
-                            button2="View Cases"
+                            title="Matters"
+                            desc="Commercial or Litigation"
+                            button1="Add Matter"
+                            button2="View Matters"
                             link1="/cases"
                             link2="/cases/view"
                         />
@@ -104,7 +103,7 @@ const Home = () => {
                     </div>
 
                     {/* Right */}
-                    {userData.rank?.toLowerCase() === 'partner' && (
+                    {userData?.rank?.toLowerCase() === 'partner' && (
                         < div className="pb-10 lg:pb-0">
                             <CardHome
                                 title="FINANCES"

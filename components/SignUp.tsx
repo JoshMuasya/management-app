@@ -27,8 +27,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { auth, db } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
-import { createUserWithEmailAndPassword } from "firebase/auth"
+import { createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth"
 import { addDoc, collection } from "firebase/firestore"
+import { useEffect, useState } from "react"
+import toast, { Toaster } from 'react-hot-toast';
+import { Loader2 } from "lucide-react"
+import { UserData } from "@/interface"
 
 const FormSchema = z.object({
     fullname: z.string().min(2, {
@@ -58,9 +62,27 @@ const FormSchema = z.object({
     path: ["confirmPassword"],
 });
 
+const addError = () => toast('Please try Again...');
+const userAdded = () => toast('User Added Successfully...');
 
 export function SignUp() {
     const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false)
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setIsLoading(false);
+            if (!user) {
+                router.replace('/auth/login');
+            } else {
+                const uid = user.uid
+            }
+        });
+
+        return () => {
+            unsubscribe();
+        };
+    }, [router]);
 
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
@@ -77,20 +99,36 @@ export function SignUp() {
     })
 
     async function onSubmit(data: z.infer<typeof FormSchema>) {
+        setIsLoading(true);
+
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
 
-            const { password, confirmPassword, ...userDataWithoutPassword } = data;
+            const { user } = userCredential;
+            const { uid } = user;
 
-            const userDocRef = await addDoc(collection(db, 'Users'), {
-                uid: userCredential.user.uid,
-                data: userDataWithoutPassword,
+            console.log("UID:", uid)
+
+            await addDoc(collection(db, "Users"), {
+                uid: uid,
+                fullname: data.fullname,
+                email: data.email,
+                phonenumber: data.phonenumber,
+                rank: data.rank,
+                department: data.department,
+                lawyerId: data.lawyerId,
             });
 
-            console.log('User Added:', userCredential.user)
-            console.log('User data stored in Firebase with ID:', userDocRef.id)
-        } catch(error) {
-            console.error(error)
+            console.log("Data:", data)
+
+            form.reset();
+            setIsLoading(false);
+
+            userAdded();
+        } catch (error) {
+            console.log(error)
+            setIsLoading(false);
+            addError();
         }
     }
 
@@ -221,15 +259,24 @@ export function SignUp() {
                                 </FormItem>
                             )}
                         />
-                        <Button
-                            type="submit"
-                            className="font-bold text-base hover:italic"
-                        >
-                            Add User
-                        </Button>
+                        {isLoading ? (
+                            <Button disabled>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Please wait
+                            </Button>
+                        ) : (
+                            <Button
+                                type="submit"
+                                className="font-bold text-base hover:italic"
+                            >
+                                Add User
+                            </Button>
+                        )}
                     </form>
                 </Form>
             </CardContent>
+
+            <Toaster />
         </Card>
     )
 }

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form"
 
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 
 import {
   Popover,
@@ -36,17 +36,27 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-import { Loader2 } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+import { ArrowLeftCircle, Loader2 } from "lucide-react"
 import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import { addDoc, collection, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { auth, db } from '@/lib/firebase'
 
 import toast, { Toaster } from 'react-hot-toast';
 import { CasesType } from '@/interface'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { onAuthStateChanged } from 'firebase/auth'
 
 const ViewCase = ({
   params
@@ -58,8 +68,10 @@ const ViewCase = ({
   const addError = () => toast('Please try Again...');
   const caseClose = () => toast('Case Closed...');
   const summary = () => toast('Summary Updated...');
+  const statusUpdated = () => toast('Status Updated...');
 
   const [casesArray, setCasesArray] = useState<CasesType[]>([])
+  const [selectedStatus, setSelectedStatus] = useState("");
 
   const router = useRouter()
 
@@ -75,6 +87,52 @@ const ViewCase = ({
   const SummaryFormSchema = z.object({
     summaryUpdate: z.string(),
   })
+
+  const StatusFormSchema = z.object({
+    status: z.string({
+      required_error: "Status is required"
+    }),
+  })
+
+  const statusForm = useForm<z.infer<typeof StatusFormSchema>>({
+    resolver: zodResolver(StatusFormSchema),
+    defaultValues: {
+      status: "",
+    },
+  })
+
+  // Function to handle status update form submission
+  async function handleStatusUpdate(data: z.infer<typeof StatusFormSchema>) {
+    try {
+      setIsLoading(true);
+
+      const documentId = params.viewCase;
+      const collectionId = "Cases";
+
+      // Get the existing case document from Firebase
+      const caseDocRef = doc(db, collectionId, documentId);
+      const caseDocSnapshot = await getDoc(caseDocRef);
+
+      if (caseDocSnapshot.exists()) {
+        // If the document exists, update the status
+        const existingData = caseDocSnapshot.data();
+        existingData.status = data.status;
+
+        // Update the document in Firebase
+        await updateDoc(caseDocRef, existingData).then(() => {
+          statusUpdated();
+          setSelectedStatus(data.status); // Update selected status
+          fetchData(); // If you want to refresh the data after updating the status
+        });
+      } else {
+        addError();
+      }
+    } catch (error) {
+      addError();
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const [isLoading, setIsLoading] = React.useState(false)
 
@@ -187,6 +245,8 @@ const ViewCase = ({
     }
   };
 
+
+
   const formsummary = useForm<z.infer<typeof SummaryFormSchema>>({
     resolver: zodResolver(SummaryFormSchema),
     defaultValues: {
@@ -197,25 +257,25 @@ const ViewCase = ({
   useEffect(() => {
     // Update formsummary default value when casesArray changes
     formsummary.setValue('summaryUpdate', casesArray[0]?.summary);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [casesArray]);
 
   async function handleSummaryUpdate(datasummary: z.infer<typeof SummaryFormSchema>) {
     try {
       setIsLoading(true);
-  
+
       const documentId = params.viewCase;
       const collectionId = "Cases";
-  
+
       // Get the existing case document from Firebase
       const caseDocRef = doc(db, collectionId, documentId);
       const caseDocSnapshot = await getDoc(caseDocRef);
-  
+
       if (caseDocSnapshot.exists()) {
         // If the document exists, update the summary
         const existingData = caseDocSnapshot.data();
         existingData.summary = datasummary.summaryUpdate;
-  
+
         // Update the document in Firebase
         await updateDoc(caseDocRef, existingData).then(() => {
           summary();
@@ -231,170 +291,226 @@ const ViewCase = ({
     }
   }
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsLoading(false);
+      if (!user) {
+        router.replace('/auth/login');
+      } else {
+        const uid = user.uid
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [router]);
+
   return (
-    <div className='pt-32 pb-24 px-10 flex flex-col justify-center items-center align-middle w-full'>
-      <div className='text-center pb-10 w-full'>
-        {casesArray.map((caseData) => (
-          <Card key={caseData.documentId} className="w-full mb-4">
-            <CardHeader>
-              <CardTitle>View Case</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='pb-5'>
-                <strong>Case Number:</strong> {caseData.caseNo}
-              </div>
-              <div className='pb-10'>
-                <strong>Case Name:</strong> {caseData.caseName}
-              </div>
-
-              <div className='flex flex-row flex-wrap justify-around align-middle items-center pb-10'>
-                <div>
-                  <strong>Department:</strong> {caseData.department}
-                </div>
-                <div>
-                  <strong>Location:</strong> {caseData.location}
-                </div>
-                <div>
-                  <strong>Court:</strong> {caseData.court}
-                </div>
-              </div>
-
-              <div className='pb-10'>
-                <div className={caseData.status === 'Active' ? 'text-primary' : 'text-destructive'}>
-                  <strong>Status:</strong>
-                  <span
-                    className={`${caseData.status === 'Active' ? 'text-primary cursor-pointer' : 'text-destructive cursor-not-allowed'
-                      }`}
-                    onClick={caseData.status === 'Active' ? handleStatusClick : undefined}
-                  >
-                    {caseData.status}
-                  </span>
-                </div>
-              </div>
-
-              <div className='pb-5'>
-                <strong>Summary:</strong>
+    <div className='pt-32 pb-24 px-10'>
+      <div className='flex flex-col justify-center items-center align-middle w-full'>
+        <div className='text-center pb-10 w-full'>
+          {casesArray.map((caseData) => (
+            <Card key={caseData.documentId} className="w-full mb-4">
+              <CardHeader>
+                <CardTitle>View Case</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className='pb-5'>
-                  {caseData.summary}
+                  <strong>Case Number:</strong> {caseData.caseNo}
+                </div>
+                <div className='pb-10'>
+                  <strong>Case Name:</strong> {caseData.caseName}
                 </div>
 
-                {/* PopOver */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button>Update</Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full">
-                    <Form {...form}>
-                      <form
-                        onSubmit={formsummary.handleSubmit(handleSummaryUpdate)}
-                        className="w-full space-y-6">
+                <div className='flex flex-row flex-wrap justify-around align-middle items-center pb-10'>
+                  <div>
+                    <strong>Department:</strong> {caseData.department}
+                  </div>
+                  <div>
+                    <strong>Location:</strong> {caseData.location}
+                  </div>
+                  <div>
+                    <strong>Court:</strong> {caseData.court}
+                  </div>
+                </div>
 
-                        {/* Summary */}
-                        <FormField
-                          control={formsummary.control}
-                          name="summaryUpdate"
-                          render={({ field }) => (
-                            <FormItem className='w-full'>
-                              <FormLabel>Add Updates</FormLabel>
-                              <FormControl>
-                                <Textarea {...field} 
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
+                <div className='pb-10'>
+                  <div className={caseData.status === 'Active' ? 'text-primary' : 'text-destructive'}>
+                    <Popover>
+                      <PopoverTrigger>
+                        <strong>Status: {selectedStatus || caseData.status}</strong>
+                      </PopoverTrigger>
+                      <PopoverContent>
+                        <Form {...form}>
+                          <form
+                            onSubmit={statusForm.handleSubmit(handleStatusUpdate)}
+                            className="w-2/3 space-y-6"
+                          >
+                            <FormField
+                              control={statusForm.control}
+                              name="status"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Reason for Closure</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select reason for case Closure" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="Judgment">Jugdement</SelectItem>
+                                      <SelectItem value="Client Withdrawal">Client Withdrawal</SelectItem>
+                                      <SelectItem value="Non Payment">Non Payment</SelectItem>
+                                      <SelectItem value="Death">Death</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <Button type="submit">Submit</Button>
+                          </form>
+                        </Form>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
 
-                        {isLoading ? (
-                          <Button disabled>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Please wait
-                          </Button>
-                        ) : (
-                          <Button type="submit">Update</Button>
-                        )}
-                      </form>
-                    </Form>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <div className='pb-5'>
+                  <strong>Summary:</strong>
+                  <div className='pb-5'>
+                    {caseData.summary}
+                  </div>
 
-      {/* Add Date */}
-      <div className='flex flex-col justify-center align-middle items-center text-base'>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="w-fit space-y-6">
-
-            {/* Date Name */}
-            <FormField
-              control={form.control}
-              name="dateName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Date Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Date Name" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            {/* Date Value */}
-            <FormField
-              control={form.control}
-              name="dateValue"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date Value</FormLabel>
+                  {/* PopOver */}
                   <Popover>
                     <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-[240px] pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
+                      <Button>Update</Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
+                    <PopoverContent className="w-full">
+                      <Form {...form}>
+                        <form
+                          onSubmit={formsummary.handleSubmit(handleSummaryUpdate)}
+                          className="w-full space-y-6">
+
+                          {/* Summary */}
+                          <FormField
+                            control={formsummary.control}
+                            name="summaryUpdate"
+                            render={({ field }) => (
+                              <FormItem className='w-full'>
+                                <FormLabel>Add Updates</FormLabel>
+                                <FormControl>
+                                  <Textarea {...field}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+
+                          {isLoading ? (
+                            <Button disabled>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Please wait
+                            </Button>
+                          ) : (
+                            <Button type="submit">Update</Button>
+                          )}
+                        </form>
+                      </Form>
                     </PopoverContent>
                   </Popover>
-                  <FormMessage />
-                </FormItem>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Add Date */}
+        <div className='flex flex-col justify-center align-middle items-center text-base'>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="w-fit space-y-6">
+
+              {/* Date Name */}
+              <FormField
+                control={form.control}
+                name="dateName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Date Name" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {/* Date Value */}
+              <FormField
+                control={form.control}
+                name="dateValue"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date Value</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-[240px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {isLoading ? (
+                <Button disabled>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Please wait
+                </Button>
+              ) : (
+                <Button type="submit">Add Date</Button>
               )}
-            />
+            </form>
+          </Form>
 
-            {isLoading ? (
-              <Button disabled>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Please wait
-              </Button>
-            ) : (
-              <Button type="submit">Add Date</Button>
-            )}
-          </form>
-        </Form>
+          <Toaster />
+        </div>
+      </div>
 
-        <Toaster />
+      <div className='w-full items-start pt-5'>
+        <Link
+          href='/cases/view'
+          className={`${buttonVariants({ variant: "default" })} px-5 text-xl font-bold`}
+        >
+          <ArrowLeftCircle />
+        </Link>
       </div>
     </div>
   )

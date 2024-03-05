@@ -11,23 +11,55 @@ import UserButton from './Popover';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { UserData } from '@/interface';
 import { useRouter } from 'next/navigation';
+import toast, { Toaster } from 'react-hot-toast';
+
+const loginError = () => toast('Please try Again...');
+const login = () => toast('Login Successful...');
 
 const Header = () => {
     const [isLogin, setIsLogin] = useState(false)
     const [userData, setUserData] = useState<UserData>({});
+    const [userDataFetched, setUserDataFetched] = useState(false);
     const router = useRouter()
 
     useEffect(() => {
-        onAuthStateChanged(auth, (user) => {
+        const handleBeforeUnload = () => {
+            if (isLogin) {
+                signOut(auth)
+                    .then(() => {
+                        // Optional: You may want to navigate the user to a logout page
+                    })
+                    .catch(error => {
+                        console.error('Error signing out:', error);
+                    });
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [isLogin, router]);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
                 const uid = user.uid;
-                setIsLogin(true)
-                fetchUserData(uid)
+                setIsLogin(true);
+                if (!userDataFetched) {
+                    fetchUserData(uid);
+                }
             } else {
-                setIsLogin(false)
+                setIsLogin(false);
+                // Reset user data if user is not logged in
+                setUserData({});
+                setUserDataFetched(false);
             }
-        })
-    }, [])
+        });
+    
+        return () => unsubscribe();
+    }, [userDataFetched]);
 
     const fetchUserData = async (uid: string) => {
         const usersCollection = collection(db, "Users");
@@ -38,13 +70,16 @@ const Header = () => {
             const querySnapshot = await getDocs(q);
 
             if (!querySnapshot.empty) {
-                const userData = querySnapshot.docs[0].data();
-                setUserData(userData.data);
+                const userData = querySnapshot.docs[0].data() as UserData;
+                setUserData(userData);
+                setUserDataFetched(true);
+
+                login();
             } else {
-                console.log("User not found in the database")
+                loginError();
             }
         } catch (error) {
-            console.error('Error fetching user data:', error)
+            loginError();
         }
     }
 
@@ -86,6 +121,8 @@ const Header = () => {
                     <ThemeToggler />
                 </div>
             }
+
+            <Toaster />
         </div>
     )
 }

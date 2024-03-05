@@ -42,6 +42,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useAppStore } from "@/store/store"
 import DropzoneComponent from 'react-dropzone'
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage"
+import { Loader2 } from "lucide-react"
 
 const FormSchema = z.object({
   clientName: z.string({
@@ -317,7 +318,20 @@ export function ClientCard() {
               )}
             />
 
-            <Button type="submit">Submit</Button>
+            {/* Login Button */}
+            {isLoading ? (
+              <Button disabled>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Please wait
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                className="font-bold text-base hover:italic"
+              >
+                Add Client
+              </Button>
+            )}
           </form>
         </Form>
 

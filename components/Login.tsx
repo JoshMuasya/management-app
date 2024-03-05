@@ -28,7 +28,9 @@ import { Input } from "@/components/ui/input"
 import { auth } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
 import { signInWithEmailAndPassword } from "firebase/auth"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { Loader2 } from "lucide-react"
+import Link from "next/link"
 
 const FormSchema = z.object({
     email: z.string().email({
@@ -42,6 +44,7 @@ const FormSchema = z.object({
 
 export function LoginForm() {
     const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false)
 
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
@@ -55,8 +58,10 @@ export function LoginForm() {
         try {
             const userCred = await signInWithEmailAndPassword(auth, data.email, data.password);
 
+            setIsLoading(true)
+
             router.push('/home')
-            
+
         } catch (error) {
             console.error(error)
         }
@@ -99,15 +104,34 @@ export function LoginForm() {
                                 </FormItem>
                             )}
                         />
-                        <Button
-                            type="submit"
-                            className="font-bold text-base hover:italic"
-                        >
-                            Login
-                        </Button>
+
+                        <div className="flex flex-row justify-between align-middle items-center">
+                            {/* Login Button */}
+                            {isLoading ? (
+                                <Button disabled>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Please wait
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="submit"
+                                    className="font-bold text-base hover:italic"
+                                >
+                                    Login
+                                </Button>
+                            )}
+
+                            {/* Forgot Password */}
+                            <Link
+                                href='/auth/reset'
+                                className="italic text-base hover:font-bold text-primary"
+                            >
+                                Forgot Password?
+                            </Link>
+                        </div>
                     </form>
                 </Form>
             </CardContent>
-        </Card>
+        </Card >
     )
 }

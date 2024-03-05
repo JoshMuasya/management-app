@@ -15,8 +15,8 @@ export default function Home() {
             DIGIMATIC
           </h1>
 
-          <h1 className='pb-12 text-ring font-black text-2xl lg:text-3xl'>
-            LAW MANAGEMENT
+          <h1 className='pb-12 text-ring font-black text-xl lg:text-3xl'>
+            LAW FIRM MANAGEMENT
           </h1>
 
           <h1 className='pb-12 text-primary font-black text-3xl lg:text-4xl'>

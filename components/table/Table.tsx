@@ -31,7 +31,7 @@ export function DataTable<TData, TValue>({
 
     const router = useRouter();
 
-    const handleClick = (clientId: string) => { 
+    const handleClick = (clientId: string) => {
         console.log('clicked:', clientId)
 
         router.push(`/clients/view/${clientId}`)
@@ -44,60 +44,64 @@ export function DataTable<TData, TValue>({
     });
 
     return (
-        <div className="rounded-md border">
-            <Table>
-                <TableHeader>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => {
-                                return (
-                                    <TableHead key={header.id}>
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                header.column.columnDef.header,
-                                                header.getContext()
-                                            )}
-                                    </TableHead>
-                                )
-                            })}
-                        </TableRow>
-                    ))}
-                </TableHeader>
-                <TableBody>
-                    {table.getRowModel().rows?.length ? (
-                        table.getRowModel().rows.map((row) => (
-                            <TableRow
-                                key={row.id}
-                                data-state={row.getIsSelected() && "selected"}
-                            >
-                                {row.getVisibleCells().map((cell) => (
-                                    <TableCell key={cell.id}>
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </TableCell>
-                                ))}
-
-                                <TableCell
-                                key={(row.original as ClientFormData).clientId}
+        <div className="flex flex-col h-screen">
+            <div className="rounded-md border overflow-auto h-[75%]">
+                <Table className="min-w-full">
+                    <TableHeader>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => {
+                                    return (
+                                        <TableHead key={header.id}>
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(
+                                                    header.column.columnDef.header,
+                                                    header.getContext()
+                                                )}
+                                        </TableHead>
+                                    )
+                                })}
+                            </TableRow>
+                        ))}
+                    </TableHeader>
+                    <TableBody>
+                        {table.getRowModel().rows?.length ? (
+                            table.getRowModel().rows.map((row) => (
+                                <TableRow
+                                    key={row.id}
+                                    data-state={row.getIsSelected() && "selected"}
+                                    onClick={() => handleClick((row.original as ClientFormData).clientId)}
+                                    className="cursor-pointer"
                                 >
-                                    <Button
-                                        variant={"secondary"}
-                                        onClick={() => handleClick((row.original as ClientFormData).clientId)}
+                                    {row.getVisibleCells().map((cell) => (
+                                        <TableCell key={cell.id}>
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </TableCell>
+                                    ))}
+
+                                    <TableCell
+                                        key={(row.original as ClientFormData).clientId}
                                     >
-                                        View More
-                                    </Button>
+                                        <Button
+                                            variant={"secondary"}
+                                            onClick={() => handleClick((row.original as ClientFormData).clientId)}
+                                        >
+                                            View More
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                    No Clients.
                                 </TableCell>
                             </TableRow>
-                        ))
-                    ) : (
-                        <TableRow>
-                            <TableCell colSpan={columns.length} className="h-24 text-center">
-                                No Clients.
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
         </div>
     )
 }

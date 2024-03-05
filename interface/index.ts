@@ -65,6 +65,7 @@ export interface UserData {
     fullname?: string;
     department?: string;
     rank?: string;
+    currentUser?: string | null;
 }
 
 export interface FinanceClientData {
@@ -89,4 +90,29 @@ export interface Expenses {
     loggedBy: string;
     name: string;
     docId: string;
+}
+
+export interface UsersData {
+    uid: string;
+    data: UserDataFromFirestore
+}
+
+export interface UserDataFromFirestore {
+    fullname: string;
+    phonenumber: string;
+    department: string;
+    lawyerId: string;
+    email: string;
+    rank: string;
+    data: UserDataFirestore;
+}
+
+export interface UserDataFirestore {
+    fullname: string;
+    phonenumber: string;
+    department: string;
+    userid: string;
+    email: string;
+    rank: string;
+    uid: string;
 }

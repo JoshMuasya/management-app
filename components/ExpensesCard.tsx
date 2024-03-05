@@ -38,7 +38,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
+import { CalendarIcon, Loader2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { onAuthStateChanged } from "firebase/auth"
 import { auth, db } from "@/lib/firebase"
@@ -70,6 +70,9 @@ export function ExpensesCard() {
     const [userData, setUserData] = useState<UserData | null>(null)
     const [fullname, setFullname] = useState("");
     const [isLoading, setIsLoading] = useState(false)
+
+    const notify = () => toast('Expense Added...');
+    const errorAdding = () => toast('Please Try Again...');
 
     useEffect(() => {
         onAuthStateChanged(auth, (user) => {
@@ -122,12 +125,14 @@ export function ExpensesCard() {
         }
         try {
             const expensesData = await addDoc(collection(db, "Expenses"), data);
-            
+
             setIsLoading(true);
 
-            console.log(expensesData)
+            notify();
         } catch (error) {
             console.error(error);
+
+            errorAdding();
         }
     }
 
@@ -230,9 +235,24 @@ export function ExpensesCard() {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit">Submit</Button>
+                        {/* Login Button */}
+                        {isLoading ? (
+                            <Button disabled>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Please wait
+                            </Button>
+                        ) : (
+                            <Button
+                                type="submit"
+                                className="font-bold text-base hover:italic"
+                            >
+                                Add Expense
+                            </Button>
+                        )}
                     </form>
                 </Form>
+
+                <Toaster />
             </CardContent>
         </Card>
     )
