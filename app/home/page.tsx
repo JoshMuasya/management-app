@@ -109,7 +109,7 @@ const Home = () => {
                                 title="FINANCES"
                                 desc="Check out the Firms Finances"
                                 button1="Finances"
-                                button2="Filter"
+                                button2="Records"
                                 link1="/finances"
                                 link2="/finances/filter"
                             />

@@ -70,6 +70,9 @@ const FormSchema = z.object({
   summary: z.string({
     required_error: "This field can't be empty!!"
   }),
+  casebudget: z.string({
+    required_error: "This field can't be empty!!"
+  }),
   instructionDate: z.string({
     required_error: "This field can't be empty!!"
   }),
@@ -129,6 +132,7 @@ export function CasesCard() {
       court: "",
       status: "",
       summary: "",
+      casebudget: "",
       instructionDate: "",
     },
   })
@@ -294,6 +298,21 @@ export function CasesCard() {
                     )}
                   />
 
+                  {/* Case Budget */}
+                  <FormField
+                    control={form.control}
+                    name="casebudget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Case Budget</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Case Budget" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   {/* Instructions Date */}
                   <FormField
                     control={form.control}
@@ -325,17 +344,6 @@ export function CasesCard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Buttons */}
-        <div className="pt-5">
-          {/* View Cases */}
-          <Link
-            href='/cases/view'
-            className={`${buttonVariants({ variant: "default" })} px-5 text-xl font-bold`}
-          >
-            View Cases
-          </Link>
-        </div>
       </div>
 
       <div className='w-full items-start pt-5'>

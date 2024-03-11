@@ -77,7 +77,6 @@ const AddFinancesForm = () => {
         );
 
         setFilteredData(result);
-        console.log(filteredData);
     }
 
     const form = useForm<z.infer<typeof FormSchema>>({
@@ -138,7 +137,6 @@ const AddFinancesForm = () => {
     }, [])
 
     const handleClick = (value: ClientFormData | null) => {
-        console.log("Clicked", value)
         setSelectedClient(value)
     }
 

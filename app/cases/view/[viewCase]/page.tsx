@@ -182,6 +182,8 @@ const ViewCase = ({
           dateName: "", // Reset other fields if needed
         });
 
+        router.push('/cases/view')
+
         notify()
       } else {
         addError()
@@ -213,39 +215,6 @@ const ViewCase = ({
   useEffect(() => {
     fetchData()
   }, [fetchData])
-
-  const handleStatusClick = async () => {
-    try {
-      setIsLoading(true);
-
-      const documentId = params.viewCase;
-      const collectionId = "Cases";
-
-      // Get the existing case document from Firebase
-      const caseDocRef = doc(db, collectionId, documentId);
-      const caseDocSnapshot = await getDoc(caseDocRef);
-
-      if (caseDocSnapshot.exists()) {
-        // If the document exists, update the status to "Closed"
-        const existingData = caseDocSnapshot.data();
-        existingData.status = "Closed";
-
-        // Update the document in Firebase
-        await updateDoc(caseDocRef, existingData).then(() => {
-          caseClose();
-          fetchData();
-        });
-      } else {
-        addError();
-      }
-    } catch (error) {
-      addError();
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-
 
   const formsummary = useForm<z.infer<typeof SummaryFormSchema>>({
     resolver: zodResolver(SummaryFormSchema),

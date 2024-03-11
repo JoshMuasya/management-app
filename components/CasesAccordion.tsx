@@ -121,17 +121,17 @@ const CasesAccordion = () => {
                                     {/* Top */}
                                     <div className='flex flex-row justify-around items-center align-middle w-full pb-2'>
                                         {/* Case Number */}
-                                        <div>
+                                        <div className='font-bold text-lg'>
                                             {item.caseNo}
                                         </div>
 
                                         {/* Case Name */}
-                                        <div>
+                                        <div className='font-bold text-lg'>
                                             {item.caseName}
                                         </div>
 
                                         {/* Department */}
-                                        <div>
+                                        <div className='font-bold text-lg'>
                                             {item.department}
                                         </div>
                                     </div>
