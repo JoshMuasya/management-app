@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 
 import { addDays, format, subMonths } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
+import { ArrowLeftCircle, Calendar as CalendarIcon } from "lucide-react"
 import { DateRange } from "react-day-picker"
 import { Expenses, FinanceClientData } from '@/interface'
 import { collection, getDocs } from 'firebase/firestore'
@@ -115,7 +115,7 @@ const ReviewFinances = () => {
         if (expense.date instanceof Date) {
           expenseDate = expense.date;
         } else {
-          expenseDate = (expense.date as any).toDate();
+          expenseDate = (expense.date as any)?.toDate();
         }
         return expenseDate >= date.from! && expenseDate <= date.to!;
       });
@@ -202,224 +202,235 @@ const ReviewFinances = () => {
   };
 
   return (
-    <div className='w-full flex flex-col justify-center align-middle items-center'>
-      {/* Title */}
-      <div className='text-2xl font-bold pb-3'>
-        View Financial Records
-      </div>
-      <ResizablePanelGroup
-        direction="horizontal"
-        className="max-w-full rounded-lg border"
-      >
-        <ResizablePanel defaultSize={40}>
-          <div className="flex h-screen items-center justify-center p-6 flex-col align-middle">
-            <div className='font-bold text-xl text-center pb-10'>
-              Select Time Period For Finances Review
-            </div>
+    <div>
+      <div className='w-full flex flex-col justify-center align-middle items-center'>
+        {/* Title */}
+        <div className='text-2xl font-bold pb-3'>
+          View Financial Records
+        </div>
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="max-w-full rounded-lg border"
+        >
+          <ResizablePanel defaultSize={40}>
+            <div className="flex h-screen items-center justify-center p-6 flex-col align-middle">
+              <div className='font-bold text-xl text-center pb-10'>
+                Select Time Period For Finances Review
+              </div>
 
-            <div className='pb-5'>
-              <div className='flex flex-col justify-center align-middle items-center'>
-                <div className={cn("grid gap-2")}>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        id="date"
-                        variant={"outline"}
-                        className={cn(
-                          "w-[300px] justify-start text-left font-normal",
-                          !date && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date?.from ? (
-                          date.to ? (
-                            <>
-                              {format(date.from, "LLL dd, y")} -{" "}
-                              {format(date.to, "LLL dd, y")}
-                            </>
+              <div className='pb-5'>
+                <div className='flex flex-col justify-center align-middle items-center'>
+                  <div className={cn("grid gap-2")}>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="date"
+                          variant={"outline"}
+                          className={cn(
+                            "w-[300px] justify-start text-left font-normal",
+                            !date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {date?.from ? (
+                            date.to ? (
+                              <>
+                                {format(date.from, "LLL dd, y")} -{" "}
+                                {format(date.to, "LLL dd, y")}
+                              </>
+                            ) : (
+                              format(date.from, "LLL dd, y")
+                            )
                           ) : (
-                            format(date.from, "LLL dd, y")
-                          )
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        initialFocus
-                        mode="range"
-                        defaultMonth={date?.from}
-                        selected={date}
-                        onSelect={handleSelect}
-                        numberOfMonths={2}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                            <span>Pick a date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          initialFocus
+                          mode="range"
+                          defaultMonth={date?.from}
+                          selected={date}
+                          onSelect={handleSelect}
+                          numberOfMonths={2}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
+              </div>
+
+              {/* Presets */}
+              <div className='flex flex-col justify-center align-middle items-center'>
+                <Button
+                  className='my-3'
+                  onClick={handleLast3Months}
+                >Last 3 Months</Button>
+                <Button
+                  className='my-3'
+                  onClick={handleLast6Months}
+                >Last 6 Months</Button>
+                <Button
+                  className='my-3'
+                  onClick={handleLast1Year}
+                >Last 1 Year</Button>
+                <Button
+                  className='my-3'
+                  onClick={handleLast5Years}
+                >Last 5 Years</Button>
+                <Button
+                  className='my-3'
+                  onClick={handleLast10Years}
+                >Last 10 Years</Button>
               </div>
             </div>
+          </ResizablePanel>
+          <ResizableHandle />
+          <ResizablePanel defaultSize={60}>
+            <ResizablePanelGroup direction="vertical">
+              <ResizablePanel defaultSize={50}>
+                <div className="flex h-fit items-center justify-center p-6 flex-col align-middle">
+                  <h1 className='font-bold text-lg pb-3'>
+                    Financial Records for the period {date?.from && format(date.from, "MMM dd yyyy")} to {date?.to && format(date.to, "MMM dd yyyy")}
+                  </h1>
 
-            {/* Presets */}
-            <div className='flex flex-col justify-center align-middle items-center'>
-              <Button
-                className='my-3'
-                onClick={handleLast3Months}
-              >Last 3 Months</Button>
-              <Button
-                className='my-3'
-                onClick={handleLast6Months}
-              >Last 6 Months</Button>
-              <Button
-                className='my-3'
-                onClick={handleLast1Year}
-              >Last 1 Year</Button>
-              <Button
-                className='my-3'
-                onClick={handleLast5Years}
-              >Last 5 Years</Button>
-              <Button
-                className='my-3'
-                onClick={handleLast10Years}
-              >Last 10 Years</Button>
-            </div>
-          </div>
-        </ResizablePanel>
-        <ResizableHandle />
-        <ResizablePanel defaultSize={60}>
-          <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={50}>
-              <div className="flex h-fit items-center justify-center p-6 flex-col align-middle">
-                <h1 className='font-bold text-lg pb-3'>
-                  Financial Records for the period {date?.from && format(date.from, "MMM dd yyyy")} to {date?.to && format(date.to, "MMM dd yyyy")}
-                </h1>
+                  {/* Clients */}
+                  <div className='flex flex-col justify-center items-center align-middle'>
+                    <h2 className='font-bold text-base pb-3'>
+                      Clients with pending Bills
+                    </h2>
 
-                {/* Clients */}
-                <div className='flex flex-col justify-center items-center align-middle'>
-                  <h2 className='font-bold text-base pb-3'>
-                    Clients with pending Bills
-                  </h2>
+                    <ScrollArea className="h-64 w-full rounded-md border">
+                      <div className='flex flex-row justify-center align-middle items-center flex-wrap'>
+                        {financesArray.map((finance, index) => {
+                          // Check if finance.totalAmount is defined and it's a valid number
+                          if (finance.totalAmount && !isNaN(parseFloat(finance.totalAmount))) {
+                            // Convert finance.totalAmount to a number
+                            const totalAmount = parseFloat(finance.totalAmount);
 
-                  <ScrollArea className="h-64 w-full rounded-md border">
-                    <div className='flex flex-row justify-center align-middle items-center flex-wrap'>
-                      {financesArray.map((finance, index) => {
-                        // Check if finance.totalAmount is defined and it's a valid number
-                        if (finance.totalAmount && !isNaN(parseFloat(finance.totalAmount))) {
-                          // Convert finance.totalAmount to a number
-                          const totalAmount = parseFloat(finance.totalAmount);
+                            // Calculate total payment from payment history
+                            const totalPayment = Object.values(finance.paymentHistory ?? {}).reduce((acc, amount) => acc + parseFloat(amount), 0);
 
-                          // Calculate total payment from payment history
-                          const totalPayment = Object.values(finance.paymentHistory ?? {}).reduce((acc, amount) => acc + parseFloat(amount), 0);
+                            // Calculate balance
+                            const balance = totalAmount - totalPayment;
 
-                          // Calculate balance
-                          const balance = totalAmount - totalPayment;
+                            return (
+                              <Card key={index} className="w-[250px] m-5">
+                                <CardHeader>
+                                  <CardTitle>{finance.clientName}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                  <h3 className='pb-3'>
+                                    <span className='font-bold text-lg'>Total Amount:</span> {totalAmount}
+                                  </h3>
 
-                          return (
-                            <Card key={index} className="w-[250px] m-5">
-                              <CardHeader>
-                                <CardTitle>{finance.clientName}</CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <h3 className='pb-3'>
-                                  <span className='font-bold text-lg'>Total Amount:</span> {totalAmount}
-                                </h3>
+                                  <h2 className="font-bold text-base pb-1">Payment History</h2>
+                                  <ul>
+                                    {Object.entries(finance.paymentHistory ?? {}).map(([date, amount]) => (
+                                      <li key={date}>
+                                        <strong>{date}:</strong> {amount}
+                                      </li>
+                                    ))}
+                                  </ul>
 
-                                <h2 className="font-bold text-base pb-1">Payment History</h2>
-                                <ul>
-                                  {Object.entries(finance.paymentHistory ?? {}).map(([date, amount]) => (
-                                    <li key={date}>
-                                      <strong>{date}:</strong> {amount}
-                                    </li>
-                                  ))}
-                                </ul>
+                                  <h3 className='pt-3'>
+                                    <span className='font-bold text-lg'>Balance:</span> {balance}
+                                  </h3>
+                                </CardContent>
+                              </Card>
+                            );
+                          } else {
+                            return null;
+                          }
+                        })}
+                      </div>
+                    </ScrollArea>
 
-                                <h3 className='pt-3'>
-                                  <span className='font-bold text-lg'>Balance:</span> {balance}
-                                </h3>
-                              </CardContent>
-                            </Card>
-                          );
-                        } else {
-                          return null;
-                        }
-                      })}
-                    </div>
-                  </ScrollArea>
-
+                  </div>
                 </div>
-              </div>
-            </ResizablePanel>
-            <ResizableHandle />
-            <ResizablePanel defaultSize={50}>
-              <div className="flex h-full items-center justify-center p-6 flex-col align-middle">
-                <h1 className='font-bold text-lg pb-3'>
-                  Revenue, Expenses, Profit & Loss
-                </h1>
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel defaultSize={50}>
+                <div className="flex h-full items-center justify-center p-6 flex-col align-middle">
+                  <h1 className='font-bold text-lg pb-3'>
+                    Revenue, Expenses, Profit & Loss
+                  </h1>
 
-                <div>
-                  <Tabs defaultValue="account" className="w-fit">
-                    <TabsList>
-                      <TabsTrigger value="revenue">Revenue</TabsTrigger>
-                      <TabsTrigger value="expenses">Expenses</TabsTrigger>
-                      <TabsTrigger value="profit">Profit & Loss</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="revenue" className='bg-primary'>
-                      <h1 className='font-bold text-base pb-3'>
-                        Total Revenue
-                      </h1>
+                  <div>
+                    <Tabs defaultValue="account" className="w-fit">
+                      <TabsList>
+                        <TabsTrigger value="revenue">Revenue</TabsTrigger>
+                        <TabsTrigger value="expenses">Expenses</TabsTrigger>
+                        <TabsTrigger value="profit">Profit & Loss</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="revenue" className='bg-primary'>
+                        <h1 className='font-bold text-base pb-3'>
+                          Total Revenue
+                        </h1>
 
-                      <div>
-                        <Card className="w-[350px]">
-                          <CardHeader>
-                            <CardDescription>Total revenue as from {date?.from && format(date.from, "MMM dd yyyy")} to {date?.to && format(date.to, "MMM dd yyyy")}</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <h1 className="font-bold text-base pb-3">
-                              Total Revenue: {totalRevenue}
-                            </h1>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="expenses" className='bg-primary'>
-                      <h1 className='font-bold text-base pb-3'>
-                        Total Expenses
-                      </h1>
+                        <div>
+                          <Card className="w-[350px]">
+                            <CardHeader>
+                              <CardDescription>Total revenue as from {date?.from && format(date.from, "MMM dd yyyy")} to {date?.to && format(date.to, "MMM dd yyyy")}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <h1 className="font-bold text-base pb-3">
+                                Total Revenue: {totalRevenue}
+                              </h1>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="expenses" className='bg-primary'>
+                        <h1 className='font-bold text-base pb-3'>
+                          Total Expenses
+                        </h1>
 
-                      <div>
-                        <Card className="w-[350px]">
-                          <CardHeader>
-                            <CardDescription>Total expenses as from {date?.from && format(date.from, "MMM dd yyyy")} to {date?.to && format(date.to, "MMM dd yyyy")}</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            Total Expenses: {totalExpenses}
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="profit" className={profitOrLoss >= 0 ? profitBackgroundColor : lossBackgroundColor}>
-                      <h1 className='font-bold text-base pb-3'>
-                        Total Profit
-                      </h1>
+                        <div>
+                          <Card className="w-[350px]">
+                            <CardHeader>
+                              <CardDescription>Total expenses as from {date?.from && format(date.from, "MMM dd yyyy")} to {date?.to && format(date.to, "MMM dd yyyy")}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              Total Expenses: {totalExpenses}
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="profit" className={profitOrLoss >= 0 ? profitBackgroundColor : lossBackgroundColor}>
+                        <h1 className='font-bold text-base pb-3'>
+                          Total Profit
+                        </h1>
 
-                      <div>
-                        <Card className="w-[350px]">
-                          <CardHeader>
-                            <CardDescription>Total Profit/Loss as from {date?.from && format(date.from, "MMM dd yyyy")} to {date?.to && format(date.to, "MMM dd yyyy")}</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                          Total {profitOrLoss >= 0 ? 'Profit' : 'Loss'}: 1500000
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
+                        <div>
+                          <Card className="w-[350px]">
+                            <CardHeader>
+                              <CardDescription>Total Profit/Loss as from {date?.from && format(date.from, "MMM dd yyyy")} to {date?.to && format(date.to, "MMM dd yyyy")}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              Total {profitOrLoss >= 0 ? 'Profit' : 'Loss'}: 1500000
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
                 </div>
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
+
+      <div className='w-full items-start pt-5 pl-10'>
+        <Link
+          href='/finances/filter'
+          className={`${buttonVariants({ variant: "default" })} px-5 text-xl font-bold fixed bottom-14`}
+        >
+          <ArrowLeftCircle />
+        </Link>
+      </div>
     </div>
   )
 }

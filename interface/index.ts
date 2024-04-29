@@ -85,11 +85,12 @@ export interface FinancesClient extends ClientFormData {
 
 export interface Expenses {
     amount: string;
-    date: { seconds: number; nanoseconds: number } | Date;
+    dateCreated: { seconds: number; nanoseconds: number } | Date;
     description: string;
     loggedBy: string;
     name: string;
     docId: string;
+    date: { seconds: number; nanoseconds: number } | Date;
 }
 
 export interface UsersData {

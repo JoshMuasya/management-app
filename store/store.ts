@@ -9,3 +9,13 @@ export const useAppStore = create<AppState>()((set) => ({
     clientID: "",
     setClientID: (clientID: string) => set((state) => ({ clientID }))
 }))
+
+interface FinanceState {
+    client: string;
+    setClient: (client: string) => void;
+}
+
+export const useFinanceStore = create<FinanceState>()((set) => ({
+    client: "",
+    setClient: (client: string) => set((state) => ({ client }))
+}))

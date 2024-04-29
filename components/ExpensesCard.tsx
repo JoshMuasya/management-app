@@ -46,6 +46,7 @@ import { addDoc, collection, getDocs, query, where } from "firebase/firestore"
 import { UserData } from "@/interface"
 import toast, { Toaster } from 'react-hot-toast';
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 const FormSchema = z.object({
     name: z.string().min(2, {
@@ -54,7 +55,7 @@ const FormSchema = z.object({
     description: z.string().min(5, {
         message: "A description is required and cannot be less than 5 characters",
     }),
-    date: z.date({
+    dateCreated: z.date({
         required_error: "A date is required.",
     }),
     amount: z.string({
@@ -71,6 +72,8 @@ export function ExpensesCard() {
     const [userData, setUserData] = useState<UserData | null>(null)
     const [fullname, setFullname] = useState("");
     const [isLoading, setIsLoading] = useState(false)
+
+    const router = useRouter();
 
     const notify = () => toast('Expense Added...');
     const errorAdding = () => toast('Please Try Again...');
@@ -129,6 +132,8 @@ export function ExpensesCard() {
 
             setIsLoading(true);
 
+            router.push('/finances/expenses/view')
+
             notify();
         } catch (error) {
             console.error(error);
@@ -139,7 +144,7 @@ export function ExpensesCard() {
 
     return (
         <div className="w-full flex flex-col justify-center items-center align-middle">
-            <Card className="w-2/5 flex flex-col justify-center align-middle items-center">
+            <Card className="w-fit sm:w-2/5 flex flex-col justify-center align-middle items-center">
                 <CardHeader>
                     <CardTitle>Add an Expense</CardTitle>
                 </CardHeader>
@@ -198,7 +203,7 @@ export function ExpensesCard() {
                             {/* Date */}
                             <FormField
                                 control={form.control}
-                                name="date"
+                                name="dateCreated"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
                                         <FormLabel>Date</FormLabel>

@@ -15,7 +15,7 @@ const Finances = () => {
     return (
         <div className="w-full h-screen flex flex-col justify-center align-middle items-center back-pic-dark bg-fixed bg-cover">
             <div className="z-10 w-full flex flex-row flex-wrap justify-center align-middle items-center mt-24 mb-14">
-                <div className='p-5'>
+                <div className='p-3'>
                     <Card className="w-[350px]">
                         <CardHeader>
                             <CardTitle>Financial Records</CardTitle>
@@ -38,7 +38,7 @@ const Finances = () => {
                     </Card>
                 </div>
 
-                <div>
+                <div className='p-3'>
                     <Card className="w-[350px]">
                         <CardHeader>
                             <CardTitle>Expenses</CardTitle>
@@ -61,7 +61,7 @@ const Finances = () => {
                     </Card>
                 </div>
 
-                <div>
+                <div className='p-3'>
                     <Card className="w-[350px]">
                         <CardHeader>
                             <CardTitle>Cases Expenses</CardTitle>

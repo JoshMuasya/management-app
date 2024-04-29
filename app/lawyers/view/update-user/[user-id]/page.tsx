@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -28,6 +28,12 @@ import {
 import { UserDataFirestore } from '@/interface'
 import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import toast, { Toaster } from 'react-hot-toast';
+import { ArrowLeftCircle, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+
+const userUpdated = () => toast('User Updated Successfully...');
 
 const FormSchema = z.object({
   fullname: z.string(),
@@ -46,6 +52,8 @@ const UpdateUser = ({
   const userId = params['user-id']
   const [userData, setUserData] = useState<UserDataFirestore[]>([])
   const [isLoading, setIsLoading] = useState(false)
+
+  const router = useRouter()
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -94,23 +102,27 @@ const UpdateUser = ({
     try {
       const userId = params['user-id'];
       await updateUserInFirebase(userId, data);
+
+      userUpdated();
+
+      router.push('/lawyers/view')
     } catch (error) {
       console.error("Error updating user:", error);
     }
   }
-  
+
   async function updateUserInFirebase(userId: string, updatedData: z.infer<typeof FormSchema>) {
     try {
       const usersRef = collection(db, "Users");
       const userQuery = query(usersRef, where("uid", "==", userId));
       const querySnapshot = await getDocs(userQuery);
-  
+
       if (querySnapshot.empty) {
         console.error("User with uid", userId, "not found");
         // Handle the case where user with the uid doesn't exist
         return; // Exit the function if no user found
       }
-  
+
       const userDoc = querySnapshot.docs[0]; // Get the first document (assuming one user per uid)
 
       const fieldsToUpdate = Object.entries(updatedData).filter(
@@ -253,11 +265,34 @@ const UpdateUser = ({
                 )}
               />
 
-              <Button type="submit">Update</Button>
+              {isLoading ? (
+                <Button disabled>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Please wait
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  className="font-bold text-base hover:italic"
+                >
+                  Update User
+                </Button>
+              )}
             </form>
           </Form>
         </CardContent>
       </Card>
+
+      <Toaster />
+
+      <div className='w-full items-start pt-5 pl-10'>
+        <Link
+          href='/lawyers/view'
+          className={`${buttonVariants({ variant: "default" })} px-5 text-xl font-bold fixed bottom-14`}
+        >
+          <ArrowLeftCircle />
+        </Link>
+      </div>
     </div>
   )
 }

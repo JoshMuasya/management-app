@@ -2,7 +2,7 @@
 
 import React from 'react'
 
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
     Card,
     CardContent,
@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation"
 import { collection, documentId, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import Link from 'next/link'
+import { ArrowLeftCircle } from 'lucide-react'
 
 const ViewClient = ({
     params
@@ -237,6 +238,15 @@ const ViewClient = ({
                         </CardContent>
                     </Card>
                 </div>
+            </div>
+
+            <div className='w-full items-start pt-5 pl-10'>
+                <Link
+                    href='/clients/view'
+                    className={`${buttonVariants({ variant: "default" })} px-5 text-xl font-bold fixed bottom-14`}
+                >
+                    <ArrowLeftCircle />
+                </Link>
             </div>
         </div>
     )
