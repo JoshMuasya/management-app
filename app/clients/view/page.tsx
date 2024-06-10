@@ -6,6 +6,9 @@ import { db } from '@/lib/firebase'
 import { ClientFormData } from '@/interface'
 import { collection, getDocs } from 'firebase/firestore'
 import React, { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { ArrowLeftCircle } from 'lucide-react'
+import { buttonVariants } from '@/components/ui/button'
 
 const ViewClients = () => {
   const [data, setData] = useState<ClientFormData[]>([]);
@@ -46,6 +49,16 @@ const ViewClients = () => {
             data={data}
           />
         </div>
+      </div>
+
+      {/* Back Button */}
+      <div className='w-full items-start pt-5'>
+        <Link
+          href='/home'
+          className={`${buttonVariants({ variant: "default" })} px-5 text-xl font-bold fixed bottom-14`}
+        >
+          <ArrowLeftCircle />
+        </Link>
       </div>
     </div>
   )

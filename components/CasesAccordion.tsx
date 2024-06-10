@@ -26,7 +26,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 
 import toast, { Toaster } from 'react-hot-toast';
 import Link from 'next/link'
-import { ArrowLeftCircle } from 'lucide-react'
+import { ArrowLeftCircle, ArrowUp, ArrowUpCircle } from 'lucide-react'
 
 const errorFetch = () => toast('Please try Again...');
 
@@ -35,6 +35,7 @@ const CasesAccordion = () => {
     const router = useRouter();
     const [userData, setUserData] = useState<UserData>({})
     const [isLogin, setIsLogin] = useState(false)
+    const [showScrollButton, setShowScrollButton] = useState(false);
 
     const fetchUserData = async (uid: string) => {
         const usersCollection = collection(db, "Users");
@@ -107,6 +108,15 @@ const CasesAccordion = () => {
     const handleClick = (caseId: string) => {
         router.push(`/cases/view/${caseId}`)
     }
+
+    const handleScroll = () => {
+        setShowScrollButton(window.scrollY > 100); // Show button after 100px scroll
+    };
+
+    useEffect(() => {
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     return (
         <div>
@@ -242,6 +252,16 @@ const CasesAccordion = () => {
                     <ArrowLeftCircle />
                 </Link>
             </div>
+
+            {/* Scroll to Top Button */}
+            {showScrollButton && (
+                <Button
+                    className="fixed bottom-14 right-10 bg-primary font-bold py-2 px-5 rounded shadow-lg"
+                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                >
+                    <ArrowUpCircle />
+                </Button>
+            )}
         </div>
     )
 }

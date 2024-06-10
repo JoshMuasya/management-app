@@ -42,7 +42,7 @@ import { ArrowLeftCircle, Loader2 } from "lucide-react"
 import toast, { Toaster } from 'react-hot-toast';
 import { useAppStore } from "@/store/store"
 import { onAuthStateChanged } from "firebase/auth"
-import { UserData } from "@/interface"
+import { ClientFormData, UserData } from "@/interface"
 import Link from "next/link"
 
 const FormSchema = z.object({
@@ -84,6 +84,7 @@ export function CasesCard() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter();
   const [userData, setUserData] = useState<UserData>({});
+  const [clientData, setClientData] = useState<ClientFormData[]>([]);
 
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
@@ -95,6 +96,31 @@ export function CasesCard() {
       }
     })
   }, [router])
+
+  useEffect(() => {
+    const fetchClientData = async () => {
+      const clientsCollection = collection(db, "Clients");
+  
+      try {
+        const querySnapshot = await getDocs(clientsCollection);
+        const newData: ClientFormData[] = [];
+        
+        if (!querySnapshot.empty) {
+          querySnapshot.forEach((doc) => {
+            const dataFromDoc = doc.data() as ClientFormData;
+            newData.push({ ...dataFromDoc });
+          });
+          setClientData(newData);
+        }
+      } catch (error) {
+        console.error('Error fetching client data:', error)
+      }
+    }
+
+    fetchClientData()
+  }, [clientData])
+
+  console.log('Client Data:', clientData)
 
   const fetchUserData = async (uid: string) => {
     const usersCollection = collection(db, "Users");

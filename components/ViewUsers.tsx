@@ -16,10 +16,12 @@ import { collection, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { UserDataFirestore } from "@/interface"
 import { useRouter } from "next/navigation"
+import { ArrowLeftCircle, ArrowUp, ArrowUpCircle } from "lucide-react"
 
 export function ViewUsers() {
     const [usersArray, setUsersArray] = useState<UserDataFirestore[]>([])
     const router = useRouter()
+    const [showScrollButton, setShowScrollButton] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -47,6 +49,15 @@ export function ViewUsers() {
     const handleClick = (userId: string) => {
         router.push(`/lawyers/view/update-user/${userId}`)
     }
+
+    const handleScroll = () => {
+        setShowScrollButton(window.scrollY > 100); // Show button after 100px scroll
+    };
+
+    useEffect(() => {
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     return (
         <div className="flex flex-wrap justify-center">
@@ -82,6 +93,26 @@ export function ViewUsers() {
                     </CardFooter>
                 </Card>
             ))}
-        </div>
+
+            {/* Back Button */}
+            <div className='w-full items-start pt-5'>
+                <Link
+                    href='/home'
+                    className={`${buttonVariants({ variant: "default" })} px-5 text-xl font-bold fixed bottom-14`}
+                >
+                    <ArrowLeftCircle />
+                </Link>
+            </div>
+
+            {/* Scroll to Top Button */}
+            {showScrollButton && (
+                <Button
+                    className="fixed bottom-14 right-10 bg-primary font-bold py-2 px-5 rounded shadow-lg"
+                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                >
+                    <ArrowUpCircle />
+                </Button>
+            )}
+        </div >
     )
 }
