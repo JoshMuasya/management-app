@@ -1,10 +1,9 @@
 "use client"
 
 import { FinanceClientData } from '@/interface'
-import { db } from '@/lib/firebase'
+import { db, storage } from '@/lib/firebase'
 import { useFinanceStore } from '@/store/store'
 import { collection, getDocs, query, where } from 'firebase/firestore'
-import { useRouter } from 'next/router'
 import React, { useEffect, useState } from 'react'
 
 import {
@@ -15,9 +14,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { useSearchParams } from 'next/navigation'
+import { v4 as uuidv4 } from 'uuid'
+import jsPDF from 'jspdf'
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 
 const ClientInvoice = () => {
-  const [financeData, setFinanceData] = useState<FinanceClientData | null>(null)
+  const [financeData, setFinanceData] = useState<FinanceClientData[] | null>(null)
+  const searchParams = useSearchParams()
+  const date = searchParams.get('date')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [invoiceNumber, setInvoiceNumber] = useState<string>('')
+  
+  console.log('Date:', date)
 
   const [client] = useFinanceStore((state) => [
     state.client
@@ -29,39 +39,84 @@ const ClientInvoice = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true)
+      setError(null)
       const collectionRef = collection(db, 'Finances')
 
       console.log('Client ID:', clientID)
 
-      const q = query(collectionRef, where('clientId', '==', clientID));
+      const q = query(collectionRef, where('clientId', '==', clientID))
 
       try {
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(q)
 
         if (!querySnapshot.empty) {
-          const financialData = querySnapshot.docs[0].data() as FinanceClientData;
+          const financialData = querySnapshot.docs.map(doc => doc.data() as FinanceClientData)
           setFinanceData(financialData)
+        } else {
+          setError('No finance data found for this client.')
         }
       } catch (error) {
+        setError('Error fetching user data. Please try again.')
         console.error('Error fetching user data:', error)
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchData()
+
+    // Generate unique invoice number
+    const uniqueInvoiceNumber = generateInvoiceNumber()
+    setInvoiceNumber(uniqueInvoiceNumber)
   }, [clientID])
 
-  useEffect(() => {
-    if (financeData) {
-      window.print();
-      window.history.back();
-    }
-  }, [financeData]);
+  const generateInvoiceNumber = () => {
+    const uuid = uuidv4()
+    const timestamp = new Date().getTime()
+    return `INV-${timestamp}-${uuid}`
+  }
+
+  console.log(financeData)
+
+  // Convert URL date and Firestore timestamp to comparable format
+  const filteredFinanceData = financeData?.filter(data => {
+    if (!date) return false
+
+    const urlDate = new Date(date)
+    const dataDate = isFirestoreTimestamp(data.dateCreated) 
+      ? new Date(data.dateCreated.seconds * 1000) 
+      : new Date(data.dateCreated)
+
+    // Compare only the date parts
+    return (
+      dataDate.getFullYear() === urlDate.getFullYear() &&
+      dataDate.getMonth() === urlDate.getMonth() &&
+      dataDate.getDate() === urlDate.getDate()
+    )
+  })
+
+  // Type guard for Firestore timestamp
+  function isFirestoreTimestamp(
+    date: Date | { seconds: number; nanoseconds: number; }
+  ): date is { seconds: number; nanoseconds: number; } {
+    return (date as { seconds: number; nanoseconds: number; }).seconds !== undefined;
+  }
+
+  console.log(filteredFinanceData)
+
+  // useEffect(() => {
+  //   if (financeData) {
+  //     window.print();
+  //     window.history.back();
+  //   }
+  // }, [financeData]);
 
   return (
     <div className='flex flex-col justify-center items-center align-middle pt-24 pb-12 w-full px-5'>
       {/* Feenote */}
       <h4 className='text-base italic text-right w-full'>
-        Invoice No
+        Invoice No: <span className='font-bold'>{invoiceNumber}</span>
       </h4>
 
       {/* Company Name */}
@@ -101,7 +156,6 @@ const ClientInvoice = () => {
         <Card>
           <CardHeader>
             <CardTitle>Professional Fees</CardTitle>
-            <CardDescription>{`Fees for ${financeData?.clientName}`}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className='flex flex-col justify-center align-middle items-center w-full'>
@@ -117,15 +171,16 @@ const ClientInvoice = () => {
               </div>
 
               {/* Total */}
-              <div className='flex flex-row justify-between align-middle items-center font-bold text-xl w-full px-5 pt-3'>
-                <h1>
-                  Total Fees
-                </h1>
-
-                <h1>
-                  {financeData?.totalAmount}
-                </h1>
-              </div>
+              {filteredFinanceData?.map((data, index) => (
+                <div key={index} className='flex flex-row justify-between align-middle items-center font-bold text-xl w-full px-5 pt-3'>
+                  <h1>
+                    {data.clientName}
+                  </h1>
+                  <h1>
+                    {data.totalAmount}
+                  </h1>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

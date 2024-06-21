@@ -111,7 +111,7 @@ const AddFinancesForm = () => {
                 const financialData = await addDoc(financesCollection, {
                     clientId: clientId,
                     clientName: clientName,
-                    ...data,
+                    ...data
                 });
 
                 setIsLoading(true);
@@ -120,7 +120,9 @@ const AddFinancesForm = () => {
 
                 setClient(clientId)
 
-                router.push(`/finances/add/invoice?clientId=${clientId}`)
+                const selectedDate = form.getValues('dateCreated')
+
+                router.push(`/finances/add/invoice?clientId=${clientId}&date=${selectedDate.toISOString()}`)
             } else {
                 console.error('clientId or clientName is not available');
             }
@@ -276,6 +278,9 @@ const AddFinancesForm = () => {
                                                         selected={field.value}
                                                         onSelect={field.onChange}
                                                         initialFocus
+                                                        disabled={(date) =>
+                                                            date > new Date() || date < new Date("2024-01-01")
+                                                          }
                                                     />
                                                 </PopoverContent>
                                             </Popover>
