@@ -81,27 +81,26 @@ const UpdateFinancesCard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const collectionRef = collection(db, "Finances")
+                const collectionRef = collection(db, "Finances");
 
-                const querySnapshot = await getDocs(collectionRef)
+                const querySnapshot = await getDocs(collectionRef);
 
-                const data: FinancesClient[] = []
+                const data: FinancesClient[] = [];
 
                 querySnapshot.forEach((doc) => {
                     const dataFromDoc = doc.data() as FinancesClient;
-                    data.push({ ...dataFromDoc, financeId: doc.id })
+                    data.push({ ...dataFromDoc, financeId: doc.id });
                 });
-
-                setClientArray(data)
+                
             } catch (error) {
-                console.error("Failed to fetch:", error)
+                console.error("Failed to fetch:", error);
             }
-        }
+        };
 
-        fetchData()
-    }, [])
+        fetchData();
+    }, []);
 
-    console.log(selectedClient)
+    console.log(clientArray)
 
     const handleSearch = () => {
         const result = clientArray.filter((item) =>

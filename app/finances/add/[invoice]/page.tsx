@@ -3,8 +3,8 @@
 import { FinanceClientData } from '@/interface'
 import { db, storage } from '@/lib/firebase'
 import { useFinanceStore } from '@/store/store'
-import { collection, getDocs, query, where } from 'firebase/firestore'
-import React, { useEffect, useState } from 'react'
+import { addDoc, collection, getDocs, query, where } from 'firebase/firestore'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import {
   Card,
@@ -105,12 +105,34 @@ const ClientInvoice = () => {
 
   console.log(filteredFinanceData)
 
-  // useEffect(() => {
-  //   if (financeData) {
-  //     window.print();
-  //     window.history.back();
-  //   }
-  // }, [financeData]);
+  const saveInvoiceDetails = useCallback(async () => {
+    if (filteredFinanceData && date) {
+      try {
+        for (const data of filteredFinanceData) {
+          const invoiceDetails = {
+            invoiceNumber,
+            clientName: data.clientName,
+            totalAmount: data.totalAmount,
+            date: new Date(date).toISOString()
+          };
+  
+          await addDoc(collection(db, "Invoices"), invoiceDetails);
+        }
+  
+        console.log('Invoice details saved successfully');
+      } catch (error) {
+        console.error('Error saving invoice details:', error)
+      }
+    }
+  }, [filteredFinanceData, invoiceNumber, date])
+
+  useEffect(() => {
+    if (financeData) {
+      window.print();
+      saveInvoiceDetails();
+      window.history.back();
+    }
+  }, [financeData, saveInvoiceDetails]);
 
   return (
     <div className='flex flex-col justify-center items-center align-middle pt-24 pb-12 w-full px-5'>
