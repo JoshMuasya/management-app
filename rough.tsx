@@ -53,7 +53,7 @@ import { format } from 'date-fns';
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { CalendarIcon } from "lucide-react"
-import { addDoc, collection, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 
 import toast, { Toaster } from 'react-hot-toast';
@@ -74,6 +74,7 @@ const UpdateFinancesCard = () => {
     const [selectedClient, setSelectedClient] = useState<FinanceClientData | null>(null);
     const [filteredData, setFilteredData] = useState(clientArray)
     const [isLoading, setIsLoading] = useState(false)
+    const [clientSummaries, setClientSummaries] = useState<FinancesClient[]>([]);
 
     const addError = () => toast('Please try Again...');
     const updated = () => toast('Payment Updated...');
@@ -82,27 +83,18 @@ const UpdateFinancesCard = () => {
         const fetchData = async () => {
             try {
                 const collectionRef = collection(db, "Finances");
+
                 const querySnapshot = await getDocs(collectionRef);
-        
-                const dataMap: { [key: string]: FinancesClient } = {};
-        
+
+                const data: FinancesClient[] = [];
+
                 querySnapshot.forEach((doc) => {
                     const dataFromDoc = doc.data() as FinancesClient;
-                    const clientId = dataFromDoc.clientId;
-                    const totalAmount = dataFromDoc.totalAmount ? parseInt(dataFromDoc.totalAmount) : 0;
-        
-                    if (dataMap[clientId]) {
-                        // Ensure totalAmount is a string before adding
-                        const existingAmount = dataMap[clientId].totalAmount ? parseInt(dataMap[clientId].totalAmount) : 0;
-                        dataMap[clientId].totalAmount = (existingAmount + totalAmount).toString();
-                    } else {
-                        dataMap[clientId] = { ...dataFromDoc, financeId: doc.id, totalAmount: totalAmount.toString() };
-                    }
+                    data.push({ ...dataFromDoc, financeId: doc.id });
                 });
-        
-                const data = Object.values(dataMap);
+
                 setClientArray(data);
-        
+
             } catch (error) {
                 console.error("Failed to fetch:", error);
             }
@@ -111,15 +103,62 @@ const UpdateFinancesCard = () => {
         fetchData();
     }, []);
 
+    console.log(clientArray)
+
+    const combinePaymentHistory = (clientArray: CombineClient[]): CombineClient[] => {
+        const groupedData: { [clientId: string]: { clientId: string; clientName: string; totalSum: number; paymentHistory: { [date: string]: string } } } = {};
+
+        clientArray.forEach(entry => {
+            const {
+                clientId = "",
+                clientName = "Unknown",
+                totalAmount = "0",
+                paymentHistory = {},
+            } = entry;
+            if (clientId !== undefined) {
+                if (!groupedData[clientId]) {
+                    groupedData[clientId] = {
+                        clientId,
+                        clientName,
+                        totalSum: 0, // Maintain totalSum logic
+                        paymentHistory: {},
+                    };
+                }
+                groupedData[clientId].totalSum += parseInt(totalAmount || '0', 10);
+
+                // Merge payment history objects, accumulating entries
+                if (paymentHistory) {
+                    Object.keys(paymentHistory).forEach(date => {
+                        if (!groupedData[clientId].paymentHistory[date]) {
+                            groupedData[clientId].paymentHistory[date] = '';
+                        }
+                        groupedData[clientId].paymentHistory[date] += paymentHistory[date];
+                    });
+                }
+            }
+        });
+
+        return Object.values(groupedData);
+    };
+
+    useEffect(() => {
+        const fetchDataAndSum = async () => {
+            const summaries = combinePaymentHistory(clientArray);
+            setClientSummaries(summaries);
+        };
+
+        fetchDataAndSum();
+    }, [clientArray]);
+
     const handleSearch = useCallback(() => {
-        const result = clientArray.filter((item) =>
+        const result = clientSummaries.filter((item) =>
             item.clientName.toLowerCase().includes(searchQuery.toLowerCase())
         );
 
-        setFilteredData(result);
-    }, [clientArray, searchQuery]);
+        setClientSummaries(result);
+    }, [searchQuery, clientSummaries]);
 
-    console.log("Filtered Array", filteredData)
+    console.log("client", clientSummaries)
 
     const handleClick = (value: FinancesClient | null) => {
         setSelectedClient(value)
@@ -133,24 +172,34 @@ const UpdateFinancesCard = () => {
     })
 
     const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-        if (selectedClient) {
-            const updatedData = {
-                ...data,
-                clientId: selectedClient.clientId,
-                clientName: selectedClient.clientName,
-                totalAmount: selectedClient.totalAmount,
-            };
+        if (!selectedClient) return;
 
-            console.log("Submitted Data", updatedData);
+        const paymentDate = data.paymentDate.toISOString().split('T')[0];
+        const amountPaid = data.amountPaid;
 
-            const paymentCollection = collection(db, 'PaymentHistory');
+        const updatedPaymentHistory = { ...(selectedClient.paymentHistory || {}) };
 
-            const paymentData = await addDoc(paymentCollection, updatedData);
-
-            setIsLoading(true);
-
+        if (updatedPaymentHistory[paymentDate]) {
+            updatedPaymentHistory[paymentDate] += amountPaid;
         } else {
-            addError();
+            updatedPaymentHistory[paymentDate] = amountPaid;
+        }
+
+        try {
+            await updateDoc(doc(db, "Finances", selectedClient.financeId), {
+                paymentHistory: updatedPaymentHistory
+            });
+
+            const docRef = doc(db, "Finances", selectedClient.financeId);
+            const docSnap = await getDoc(docRef);
+            const updatedClientData = { ...docSnap.data(), financeId: docSnap.id } as unknown as FinanceClientData;
+            setSelectedClient(updatedClientData);
+
+            updated()
+
+            form.reset();
+        } catch (error) {
+            console.error("Failed to update client: ", error)
         }
     };
 
@@ -201,7 +250,7 @@ const UpdateFinancesCard = () => {
                         <div className='pt-5'>
                             <Select
                                 onValueChange={(value) => {
-                                    const selected = filteredData.find(client => client.clientId === value) || null;
+                                    const selected = clientSummaries.find(client => client.clientId === value) || null;
                                     handleClick(selected);
                                 }}
                             >
@@ -210,10 +259,10 @@ const UpdateFinancesCard = () => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        {filteredData.length === 0 ? (
+                                        {clientSummaries.length === 0 ? (
                                             <p>No matching clients found</p>
                                         ) : (
-                                            filteredData.map((client) => (
+                                            clientSummaries.map((client) => (
                                                 <SelectItem
                                                     key={client.clientId}
                                                     value={client.clientId}

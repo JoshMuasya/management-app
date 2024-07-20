@@ -81,6 +81,22 @@ export interface FinancesClient extends ClientFormData {
     dateCreated: { seconds: number; nanoseconds: number } | Date;
     totalAmount?: string;
     financeId: string;
+    paymentHistory?: { [date: string]: string };
+}
+
+export interface CombineClient extends FinanceClientData {
+    dateCreated: { seconds: number; nanoseconds: number } | Date;
+    totalAmount?: string;
+    financeId: string;
+    paymentHistory?: { [date: string]: string };
+    totalSum: number;
+}
+
+export interface ClientSummary {
+    clientId: string;
+    clientName: string;
+    totalSum: number;
+    paymentHistory: { [date: string]: string };
 }
 
 export interface Expenses {

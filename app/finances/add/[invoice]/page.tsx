@@ -18,6 +18,7 @@ import { useSearchParams } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid'
 import jsPDF from 'jspdf'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
+import { nanoid } from 'nanoid'
 
 const ClientInvoice = () => {
   const [financeData, setFinanceData] = useState<FinanceClientData[] | null>(null)
@@ -52,7 +53,14 @@ const ClientInvoice = () => {
 
         if (!querySnapshot.empty) {
           const financialData = querySnapshot.docs.map(doc => doc.data() as FinanceClientData)
-          setFinanceData(financialData)
+
+          const filteredData = filterDataByDate(financialData, date)
+
+          setFinanceData(filteredData ? [filteredData] : null)
+
+          if (!filteredData) {
+            setError('No finance data found for this client on the specified date.')
+          }
         } else {
           setError('No finance data found for this client.')
         }
@@ -72,29 +80,31 @@ const ClientInvoice = () => {
   }, [clientID])
 
   const generateInvoiceNumber = () => {
-    const uuid = uuidv4()
     const timestamp = new Date().getTime()
-    return `INV-${timestamp}-${uuid}`
+    const shortId = nanoid(4)
+    return `INV-${timestamp}-${shortId}`
   }
 
   console.log(financeData)
 
   // Convert URL date and Firestore timestamp to comparable format
-  const filteredFinanceData = financeData?.filter(data => {
-    if (!date) return false
+  const filterDataByDate = (data: FinanceClientData[], date: string | null): FinanceClientData | null => {
+    if (!date) return null
 
     const urlDate = new Date(date)
-    const dataDate = isFirestoreTimestamp(data.dateCreated) 
-      ? new Date(data.dateCreated.seconds * 1000) 
-      : new Date(data.dateCreated)
 
-    // Compare only the date parts
-    return (
-      dataDate.getFullYear() === urlDate.getFullYear() &&
-      dataDate.getMonth() === urlDate.getMonth() &&
-      dataDate.getDate() === urlDate.getDate()
-    )
-  })
+    return data.find(item => {
+      const itemDate = isFirestoreTimestamp(item.dateCreated) 
+        ? new Date(item.dateCreated.seconds * 1000) 
+        : new Date(item.dateCreated)
+
+      return (
+        itemDate.getFullYear() === urlDate.getFullYear() &&
+        itemDate.getMonth() === urlDate.getMonth() &&
+        itemDate.getDate() === urlDate.getDate()
+      )
+    }) || null
+  }
 
   // Type guard for Firestore timestamp
   function isFirestoreTimestamp(
@@ -103,12 +113,10 @@ const ClientInvoice = () => {
     return (date as { seconds: number; nanoseconds: number; }).seconds !== undefined;
   }
 
-  console.log(filteredFinanceData)
-
   const saveInvoiceDetails = useCallback(async () => {
-    if (filteredFinanceData && date) {
+    if (financeData && date) {
       try {
-        for (const data of filteredFinanceData) {
+        for (const data of financeData) {
           const invoiceDetails = {
             invoiceNumber,
             clientName: data.clientName,
@@ -124,7 +132,7 @@ const ClientInvoice = () => {
         console.error('Error saving invoice details:', error)
       }
     }
-  }, [filteredFinanceData, invoiceNumber, date])
+  }, [financeData, invoiceNumber, date])
 
   useEffect(() => {
     if (financeData) {
@@ -193,7 +201,7 @@ const ClientInvoice = () => {
               </div>
 
               {/* Total */}
-              {filteredFinanceData?.map((data, index) => (
+              {financeData?.map((data, index) => (
                 <div key={index} className='flex flex-row justify-between align-middle items-center font-bold text-xl w-full px-5 pt-3'>
                   <h1>
                     {data.clientName}
