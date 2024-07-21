@@ -44,7 +44,7 @@ import { ArrowLeftCircle, Search } from 'lucide-react'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { ClientFormData, FinanceClientData, FinancesClient, ClientSummary, CombineClient } from '@/interface'
+import { ClientFormData, FinanceClientData, FinancesClient, PaymentHistories } from '@/interface'
 
 import { Separator } from "@/components/ui/separator"
 
@@ -74,6 +74,8 @@ const UpdateFinancesCard = () => {
     const [selectedClient, setSelectedClient] = useState<FinanceClientData | null>(null);
     const [filteredData, setFilteredData] = useState(clientArray)
     const [isLoading, setIsLoading] = useState(false)
+    const [paymentHistories, setPaymentHistories] = useState<PaymentHistories[]>([])
+    const [totalAmountPaidFromHistory, setTotalAmountPaidFromHistory] = useState(0);
 
     const addError = () => toast('Please try Again...');
     const updated = () => toast('Payment Updated...');
@@ -83,14 +85,14 @@ const UpdateFinancesCard = () => {
             try {
                 const collectionRef = collection(db, "Finances");
                 const querySnapshot = await getDocs(collectionRef);
-        
+
                 const dataMap: { [key: string]: FinancesClient } = {};
-        
+
                 querySnapshot.forEach((doc) => {
                     const dataFromDoc = doc.data() as FinancesClient;
                     const clientId = dataFromDoc.clientId;
                     const totalAmount = dataFromDoc.totalAmount ? parseInt(dataFromDoc.totalAmount) : 0;
-        
+
                     if (dataMap[clientId]) {
                         // Ensure totalAmount is a string before adding
                         const existingAmount = dataMap[clientId].totalAmount ? parseInt(dataMap[clientId].totalAmount) : 0;
@@ -99,17 +101,37 @@ const UpdateFinancesCard = () => {
                         dataMap[clientId] = { ...dataFromDoc, financeId: doc.id, totalAmount: totalAmount.toString() };
                     }
                 });
-        
+
                 const data = Object.values(dataMap);
                 setClientArray(data);
-        
+
             } catch (error) {
                 console.error("Failed to fetch:", error);
             }
         };
 
+        const fetchHistory = async () => {
+            try {
+                const collectionRef = collection(db, "PaymentHistory");
+
+                const querySnapshot = await getDocs(collectionRef);
+                const data = querySnapshot.docs.map((doc) => doc.data() as PaymentHistories);
+
+                setPaymentHistories(data);
+
+                const totalAmountPaid = data.reduce((sum, payment) => sum + parseInt(payment.amountPaid), 0);
+                setTotalAmountPaidFromHistory(totalAmountPaid);
+            } catch (error) {
+                console.error("Failed to fetch:", error);
+            }
+        }
+
         fetchData();
+        fetchHistory();
     }, []);
+
+    console.log("Payment Histories", paymentHistories)
+    console.log("Total Amount", totalAmountPaidFromHistory)
 
     const handleSearch = useCallback(() => {
         const result = clientArray.filter((item) =>
@@ -166,7 +188,11 @@ const UpdateFinancesCard = () => {
 
     const totalAmount = selectedClient ? parseInt(selectedClient.totalAmount || "0") : 0;
     const totalAmountPaid = selectedClient && selectedClient.paymentHistory ? Object.values(selectedClient.paymentHistory).reduce((acc, val) => acc + parseInt(val), 0) : 0;
-    const balance = totalAmount - totalAmountPaid;
+    const balance = totalAmount - totalAmountPaidFromHistory;
+
+    // Filter the payment histories relevant to the selected client
+    const filteredPaymentHistories = paymentHistories.filter(history => history.clientId === selectedClient?.clientId);
+
 
     return (
         <div className="flex flex-col justify-center align-middle items-center w-full">
@@ -265,7 +291,7 @@ const UpdateFinancesCard = () => {
                     </CardContent>
 
                     <CardContent className="flex flex-col justify-center align-middle items-center text-base">
-                        <div className="flex flex-col justify-center align-middle items-center text-base">
+                        <div className="flex flex-col justify-center align-middle items-start text-base pb-5">
                             {/* Title */}
                             <Label className="pb-5 text-2xl font-bold">
                                 Payment History
@@ -277,24 +303,30 @@ const UpdateFinancesCard = () => {
                                 <div>Amount</div>
                             </div>
 
-                            {selectedClient && selectedClient.paymentHistory && Object.entries(selectedClient.paymentHistory).map(([date, amount]) => (
-                                <div key={date} className="flex h-5 items-center space-x-4 text-sm py-5">
-                                    <div className='font-medium'>{date}</div>
-                                    <Separator orientation="vertical" />
-                                    <div>{amount}</div>
+                            {filteredPaymentHistories.length > 0 ? (
+                                <div className='w-full'>
+                                    {filteredPaymentHistories.map((history, index) => (
+                                        <div key={index} className="flex h-5 items-center space-x-4 text-sm py-5">
+                                            <div className='font-medium'>{formattedDate(history.paymentDate)}</div>
+                                            <Separator orientation="vertical" />
+                                            <div>{history.amountPaid}</div>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            ) : (
+                                <p>No payment history available</p>
+                            )}
 
-                            <div className="flex h-5 items-center space-x-4 text-sm pb-5 pt-5 font-bold">
+                            <div className="flex h-5 items-center space-x-4 text-sm pb-5 pt-12 font-bold">
                                 <div>Total Paid</div>
                                 <Separator orientation="vertical" />
-                                <div>{totalAmountPaid}</div>
+                                <div>{selectedClient ? totalAmountPaidFromHistory : 0}</div>
                             </div>
 
                             <div className="flex h-5 items-center space-x-4 text-sm pb-5 pt-5 font-bold italic">
                                 <div>Balance</div>
                                 <Separator orientation="vertical" />
-                                <div>{balance}</div>
+                                <div>{selectedClient ? balance : 0}</div>
                             </div>
                         </div>
 

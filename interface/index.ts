@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export interface CardType {
     title: string;
     desc: string;
@@ -84,12 +86,12 @@ export interface FinancesClient extends ClientFormData {
     paymentHistory?: { [date: string]: string };
 }
 
-export interface CombineClient extends FinanceClientData {
-    dateCreated: { seconds: number; nanoseconds: number } | Date;
-    totalAmount?: string;
-    financeId: string;
-    paymentHistory?: { [date: string]: string };
-    totalSum: number;
+export interface PaymentHistories {
+    clientId: string;
+    clientName: string;
+    totalAmount: string;
+    amountPaid: string;  
+    paymentDate: Timestamp;  
 }
 
 export interface ClientSummary {
