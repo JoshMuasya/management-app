@@ -1,6 +1,8 @@
+'use client'
+
 import React from 'react'
 
-import { buttonVariants } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
     Card,
     CardDescription,
@@ -9,9 +11,12 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import Link from 'next/link'
-import { ArrowLeftCircle } from 'lucide-react'
+import { ArrowLeftCircle } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 const Finances = () => {
+    const loading = () => toast('Loading...');
+
     return (
         <div className="w-full h-screen flex flex-col justify-center align-middle items-center back-pic-dark bg-fixed bg-cover">
             <div className="z-10 w-full flex flex-row flex-wrap justify-center align-middle items-center mt-24 mb-14">
@@ -22,18 +27,21 @@ const Finances = () => {
                             <CardDescription>Add or Update Financial records for clients</CardDescription>
                         </CardHeader>
                         <CardFooter className="flex justify-between">
-                            <Link
-                                className={buttonVariants({ variant: "default" })}
-                                href='/finances/add'
+                            <Button
+                                asChild
+                                variant="default"
+                                onClick={loading}
                             >
-                                Add
-                            </Link>
-                            <Link
-                                className={buttonVariants({ variant: "secondary" })}
-                                href='/finances/update'
+                                <Link href="/finances/add">Add</Link>
+                            </Button>
+
+                            <Button
+                                asChild
+                                variant="secondary"
+                                onClick={loading}
                             >
-                                Update
-                            </Link>
+                                <Link href="/finances/update">Update</Link>
+                            </Button>
                         </CardFooter>
                     </Card>
                 </div>
@@ -45,18 +53,21 @@ const Finances = () => {
                             <CardDescription>Add or View Expenses</CardDescription>
                         </CardHeader>
                         <CardFooter className="flex justify-between">
-                            <Link
-                                className={buttonVariants({ variant: "default" })}
-                                href='/finances/expenses'
+                            <Button
+                                asChild
+                                variant="default"
+                                onClick={loading}
                             >
-                                Add
-                            </Link>
-                            <Link
-                                className={buttonVariants({ variant: "secondary" })}
-                                href='/finances/expenses/view'
+                                <Link href="/finances/expenses">Add</Link>
+                            </Button>
+
+                            <Button
+                                asChild
+                                variant="secondary"
+                                onClick={loading}
                             >
-                                View
-                            </Link>
+                                <Link href="/finances/expenses/view">View</Link>
+                            </Button>
                         </CardFooter>
                     </Card>
                 </div>
@@ -68,12 +79,13 @@ const Finances = () => {
                             <CardDescription>Add Expenses related to Cases</CardDescription>
                         </CardHeader>
                         <CardFooter className="flex justify-between">
-                            <Link
-                                className={buttonVariants({ variant: "default" })}
-                                href='/finances/expenses/caseexpenses'
+                            <Button
+                                asChild
+                                variant="default"
+                                onClick={loading}
                             >
-                                Add
-                            </Link>
+                                <Link href="/finances/expenses/caseexpenses">Add</Link>
+                            </Button>
                         </CardFooter>
                     </Card>
                 </div>

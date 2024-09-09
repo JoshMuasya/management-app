@@ -339,21 +339,6 @@ export function CasesCard() {
                     )}
                   />
 
-                  {/* Instructions Date */}
-                  <FormField
-                    control={form.control}
-                    name="instructionDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Instructions Date</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Instructions Date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
                   {/* Button */}
                   {isLoading ? (
                     <Button disabled>

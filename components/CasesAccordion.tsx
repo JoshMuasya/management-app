@@ -125,11 +125,13 @@ const CasesAccordion = () => {
                     {casesArray.map((item, index) => (
                         <AccordionItem
                             key={index}
-                            value={`item-${index}`}>
+                            value={`item-${index}`}
+                            className={index % 2 === 0 ? 'bg-transparent' : 'bg-muted'}
+                            >
                             <AccordionTrigger>
-                                <div className='flex flex-col justify-center items-center align-middle w-full'>
+                                <div className='flex flex-col justify-center items-start align-middle w-full'>
                                     {/* Top */}
-                                    <div className='flex flex-row justify-around items-center align-middle w-full pb-2'>
+                                    <div className='flex flex-row justify-between items-start align-middle w-full pb-2 px-16'>
                                         {/* Case Number */}
                                         <div className='font-bold text-lg'>
                                             {item.caseNo}
@@ -151,7 +153,7 @@ const CasesAccordion = () => {
                                     />
 
                                     {/* Bottom */}
-                                    <div className='flex flex-row flex-wrap justify-around items-center align-middle w-full'>
+                                    <div className='flex flex-row flex-wrap justify-between items-start align-middle w-full px-20'>
                                         {/* Location */}
                                         <div>
                                             {item.location}

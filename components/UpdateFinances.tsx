@@ -76,6 +76,7 @@ const UpdateFinancesCard = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [paymentHistories, setPaymentHistories] = useState<PaymentHistories[]>([])
     const [totalAmountPaidFromHistory, setTotalAmountPaidFromHistory] = useState(0);
+    const [filteredHistories, setFilteredHistories] = useState<PaymentHistories[]>([]);
 
     const addError = () => toast('Please try Again...');
     const updated = () => toast('Payment Updated...');
@@ -119,8 +120,8 @@ const UpdateFinancesCard = () => {
 
                 setPaymentHistories(data);
 
-                const totalAmountPaid = data.reduce((sum, payment) => sum + parseInt(payment.amountPaid), 0);
-                setTotalAmountPaidFromHistory(totalAmountPaid);
+                // const totalAmountPaid = data.reduce((sum, payment) => sum + parseInt(payment.amountPaid), 0);
+                // setTotalAmountPaidFromHistory(totalAmountPaid);
             } catch (error) {
                 console.error("Failed to fetch:", error);
             }
@@ -131,6 +132,29 @@ const UpdateFinancesCard = () => {
     }, []);
 
     console.log("Payment Histories", paymentHistories)
+    console.log("Total Amount", totalAmountPaidFromHistory)
+
+    useEffect(() => {
+        if (selectedClient) {
+            // Filter payment histories based on the selected client's clientId
+            const filteredHistories = paymentHistories.filter(
+                (history) => history.clientId === selectedClient.clientId
+            );
+
+            // Calculate the total amount paid
+            const totalPaid = filteredHistories.reduce((total, history) => {
+                return total + parseInt(history.amountPaid, 10); // Ensure amountPaid is an integer
+            }, 0);
+
+            setFilteredHistories(filteredHistories);
+            setTotalAmountPaidFromHistory(totalPaid);
+        } else {
+            setFilteredHistories([]);
+            setTotalAmountPaidFromHistory(0);
+        }
+    }, [selectedClient, paymentHistories]);
+
+    console.log("Filtered Histories", filteredHistories)
     console.log("Total Amount", totalAmountPaidFromHistory)
 
     const handleSearch = useCallback(() => {
@@ -169,6 +193,14 @@ const UpdateFinancesCard = () => {
 
             const paymentData = await addDoc(paymentCollection, updatedData);
 
+            // Reset the form after successful submission
+            form.reset();
+
+            // Trigger a success toast notification
+            updated();
+
+            window.location.reload();
+
             setIsLoading(true);
 
         } else {
@@ -191,7 +223,7 @@ const UpdateFinancesCard = () => {
     const balance = totalAmount - totalAmountPaidFromHistory;
 
     // Filter the payment histories relevant to the selected client
-    const filteredPaymentHistories = paymentHistories.filter(history => history.clientId === selectedClient?.clientId);
+    // const filteredPaymentHistories = paymentHistories.filter(history => history.clientId === selectedClient?.clientId);
 
 
     return (
@@ -303,9 +335,9 @@ const UpdateFinancesCard = () => {
                                 <div>Amount</div>
                             </div>
 
-                            {filteredPaymentHistories.length > 0 ? (
+                            {filteredHistories.length > 0 ? (
                                 <div className='w-full'>
-                                    {filteredPaymentHistories.map((history, index) => (
+                                    {filteredHistories.map((history, index) => (
                                         <div key={index} className="flex h-5 items-center space-x-4 text-sm py-5">
                                             <div className='font-medium'>{formattedDate(history.paymentDate)}</div>
                                             <Separator orientation="vertical" />
