@@ -48,11 +48,13 @@ import { collection, getDocs } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { useEffect, useState } from "react"
 import { onAuthStateChanged } from "firebase/auth"
+import { useRouter } from 'next/navigation'
 
 export function ViewExpensesCard() {
   const [totalExpenses, setTotalExpenses] = useState<number>(0);
   const [expensesArray, setExpensesArray] = useState<Expenses[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expenses[]>([]);
+  const router = useRouter()
 
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
@@ -161,6 +163,14 @@ export function ViewExpensesCard() {
     const toDate = today;
     setDate({ from: fromDate, to: toDate });
   };
+
+  const handlePrint = () => {
+    if (date?.from && date?.to) {
+      const fromDate = format(date.from, "yyyy-MM-dd");
+      const toDate = format(date.to, "yyyy-MM-dd");
+      router.push(`/finances/expenses/view/expenses?from=${fromDate}&to=${toDate}`);
+    }
+  }
 
   return (
     <div className="flex flex-col justify-center align-middle items-center w-full">
@@ -289,6 +299,15 @@ export function ViewExpensesCard() {
                     </div>
                   </ScrollArea>
                 )}
+              </div>
+
+              {/* Print Button */}
+              <div className="pt-5">
+                <Button
+                onClick={handlePrint}
+                >
+                  Print 
+                </Button>
               </div>
             </div>
           </ResizablePanel>
